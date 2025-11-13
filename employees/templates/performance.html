@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Performance | Employee Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
+
+  {% include "sideandtopbar.html" %}
+
+  <main class="flex-1 p-6 md:ml-64 mt-16">
+    <div class="p-6">
+
+      {% if error %}
+        <p class="text-red-500 font-semibold">{{ error }}</p>
+      {% else %}
+
+      <!-- Dark/Light Toggle -->
+      <div class="flex justify-end mb-4">
+        <button id="theme-toggle" class="px-2 py-1 border rounded text-sm">Toggle Dark</button>
+      </div>
+
+      <!-- Page Header -->
+      <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200">Performance</h1>
+        <p class="text-gray-500 dark:text-gray-400">Track your performance metrics and goals</p>
+      </div>
+
+      <!-- Performance Overview -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <!-- Overall Rating -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border text-center">
+          <div class="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-3">
+            <i class="fas fa-star text-green-600 text-2xl"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1">Overall Rating</h3>
+          <p class="text-3xl font-bold text-green-600">
+            {{ performance.overall_rating|default:0 }}
+          </p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">out of 5.0</p>
+        </div>
+
+        <!-- Goals Achieved -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border text-center">
+          <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-3">
+            <i class="fas fa-target text-blue-600 text-2xl"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1">Goals Achieved</h3>
+          <p class="text-3xl font-bold text-blue-600">{{ performance.goals_achieved|default:0 }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            out of {{ performance.total_goals|default:0 }}
+          </p>
+        </div>
+
+        <!-- Projects Completed -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border text-center">
+          <div class="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-3">
+            <i class="fas fa-project-diagram text-purple-600 text-2xl"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1">Projects Completed</h3>
+          <p class="text-3xl font-bold text-purple-600">{{ performance.projects_completed|default:0 }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">this year</p>
+        </div>
+
+        <!-- Achievements -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border text-center">
+          <div class="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mx-auto mb-3">
+            <i class="fas fa-trophy text-yellow-600 text-2xl"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1">Achievements</h3>
+          <p class="text-3xl font-bold text-yellow-600">{{ performance.achievements|default:0 }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">badges earned</p>
+        </div>
+      </div>
+
+      <!-- Skills & Feedback -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Skills Assessment -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border">
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Skills Assessment</h3>
+          <div class="space-y-4">
+            {% for skill in skills %}
+              <div>
+                <div class="flex justify-between mb-2">
+                  <span class="text-gray-800 dark:text-gray-200">{{ skill.name }}</span>
+                  <span class="text-gray-500 dark:text-gray-400">{{ skill.value }}%</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div class="h-2 rounded-full progress-bar" 
+                       style="width:0%; background-color: {{ skill.color }};"
+                       data-width="{{ skill.value }}">
+                  </div>
+                </div>
+              </div>
+            {% empty %}
+              <p class="text-gray-500 dark:text-gray-400 text-sm">No skills found.</p>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Recent Feedback -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border">
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Recent Feedback</h3>
+          <div id="feedback-container" class="space-y-4 max-h-64 overflow-hidden transition-all duration-500">
+            {% if feedbacks %}
+              {% for feedback in feedbacks %}
+                <div class="p-4 bg-gray-100 dark:bg-gray-900 rounded-lg">
+                  <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 bg-{{ feedback.color }}-100 dark:bg-{{ feedback.color }}-900 rounded-full flex items-center justify-center">
+                      <i class="fas fa-user text-{{ feedback.color }}-600 text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-sm text-gray-800 dark:text-gray-200 mb-1">"{{ feedback.text }}"</p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">- {{ feedback.author }}</p>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <p class="text-gray-500 dark:text-gray-400 text-sm">No feedback yet.</p>
+            {% endif %}
+          </div>
+          {% if feedbacks|length > 3 %}
+            <button id="toggle-feedback" class="text-blue-600 dark:text-blue-400 text-sm mt-2">Show More</button>
+          {% endif %}
+        </div>
+
+      </div>
+
+      {% endif %}
+    </div>
+  </main>
+
+  <!-- JS -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Animate progress bars
+      const bars = document.querySelectorAll(".progress-bar");
+      bars.forEach(bar => {
+        const width = bar.dataset.width;
+        setTimeout(() => {
+          bar.style.transition = "width 1s ease-in-out";
+          bar.style.width = width + "%";
+        }, 100);
+      });
+
+      // Collapse/expand feedback
+      const btn = document.getElementById("toggle-feedback");
+      const container = document.getElementById("feedback-container");
+      if(btn){
+        btn.addEventListener("click", () => {
+          container.classList.toggle("max-h-64");
+          btn.textContent = container.classList.contains("max-h-64") ? "Show More" : "Show Less";
+        });
+      }
+
+      // Dark/light toggle
+      const themeToggle = document.getElementById("theme-toggle");
+      themeToggle.addEventListener("click", () => {
+        document.documentElement.classList.toggle("dark");
+      });
+    });
+  </script>
+
+</body>
+</html>

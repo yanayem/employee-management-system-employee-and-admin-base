@@ -1,0 +1,120 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Managely - Role Selection</title>
+  
+  <!-- Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-pVtXkN6QPRk+9P1gTLuzbtS+0S6yG5VjsyV7u7DZq7G1bRmmNMC+Ocqk0E4/J2hUe3jq0+ZL3Nwkl6l0aA3/0w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .card-hover:hover {
+      transform: scale(1.05);
+      transition: transform 0.3s;
+    }
+    /* Light/Dark theme classes */
+    .light {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f3f4f6;
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+    }
+    .dark {
+      --bg-primary: #1f2937;
+      --bg-secondary: #111827;
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+    }
+    .theme-bg-primary { background-color: var(--bg-primary); }
+    .theme-bg-secondary { background-color: var(--bg-secondary); }
+    .theme-text-primary { color: var(--text-primary); }
+    .theme-text-secondary { color: var(--text-secondary); }
+    .theme-border { border-color: #e5e7eb; }
+    .dark .theme-border { border-color: #374151; }
+  </style>
+</head>
+<body class="light theme-bg-secondary">
+
+  <!-- Role Selection Page -->
+  <div id="role-selection-page" class="min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-4xl w-full">
+      <div class="text-center mb-12">
+        <div class="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-700 rounded-3xl flex items-center justify-center mx-auto mb-6">
+          <i class="fas fa-building text-white text-3xl"></i>
+        </div>
+        <h1 class="text-4xl font-bold theme-text-primary mb-3">Managely</h1>
+        <p class="text-xl theme-text-secondary">Human Resource Management System</p>
+        <p class="theme-text-secondary mt-2">Choose your portal to continue</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Admin Portal -->
+        <div class="theme-bg-primary rounded-2xl shadow-2xl p-8 theme-border border card-hover cursor-pointer">
+          <div class="text-center">
+            <div class="w-20 h-20 bg-gradient-to-br from-red-500 to-red-700 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <i class="fas fa-user-shield text-white text-2xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold theme-text-primary mb-3">Admin Portal</h2>
+            <p class="theme-text-secondary mb-6">Manage employees, departments, payroll, and system settings</p>
+            <div class="space-y-2 text-sm theme-text-secondary mb-6">
+              <div class="flex items-center justify-center space-x-2"><i class="fas fa-check text-green-600"></i> <span>Employee Management</span></div>
+              <div class="flex items-center justify-center space-x-2"><i class="fas fa-check text-green-600"></i> <span>Payroll & Benefits</span></div>
+              <div class="flex items-center justify-center space-x-2"><i class="fas fa-check text-green-600"></i> <span>Reports & Analytics</span></div>
+              <div class="flex items-center justify-center space-x-2"><i class="fas fa-check text-green-600"></i> <span>System Administration</span></div>
+            </div>
+            <button class="w-full bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 text-white py-3 rounded-lg font-medium transition-all duration-300"
+                    onclick="window.location.href='{% url 'admin:index' %}'">
+              Access Admin Portal
+            </button>
+          </div>
+        </div>
+
+        <!-- Employee Portal -->
+        <div class="theme-bg-primary rounded-2xl shadow-2xl p-8 theme-border border card-hover cursor-pointer">
+          <div class="text-center">
+            <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <i class="fas fa-user-tie text-white text-2xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold theme-text-primary mb-3">Employee Portal</h2>
+            <p class="theme-text-secondary mb-6">Access your personal dashboard, attendance, leave, and payroll</p>
+            <div class="space-y-2 text-sm theme-text-secondary mb-6">
+              <div class="flex items-center justify-center space-x-2"><i class="fas fa-check text-green-600"></i> <span>Personal Dashboard</span></div>
+              <div class="flex items-center justify-center space-x-2"><i class="fas fa-check text-green-600"></i> <span>Attendance & Leave</span></div>
+              <div class="flex items-center justify-center space-x-2"><i class="fas fa-check text-green-600"></i> <span>Payroll & Documents</span></div>
+              <div class="flex items-center justify-center space-x-2"><i class="fas fa-check text-green-600"></i> <span>Performance Tracking</span></div>
+            </div>
+            <button class="w-full bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white py-3 rounded-lg font-medium transition-all duration-300"
+                    onclick="window.location.href='{% url 'accounts:employee_login_page' %}'">
+              Access Employee Portal
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-8 text-center">
+        <button id="theme-toggle-role" class="theme-text-secondary hover:theme-text-primary transition-colors">
+          <i class="fas fa-moon"></i> Toggle Theme
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Theme toggle logic
+    const themeToggle = document.getElementById('theme-toggle-role');
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+      document.body.classList.toggle('light');
+    });
+  </script>
+
+</body>
+</html>

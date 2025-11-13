@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leave Management | Employee Portal</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body class="bg-gray-100 dark:bg-blue-900 text-gray-900 dark:text-white transition-colors duration-300">
+
+  {% include "sideandtopbar.html" %}
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 md:ml-64 mt-16">
+
+      <!-- Header -->
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Leave Management</h1>
+          <p class="text-gray-600 dark:text-gray-300">Apply for leave and track your requests</p>
+        </div>
+        <button id="apply-leave-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2">
+          <i class="fas fa-plus"></i> Apply for Leave
+        </button>
+      </div>
+
+<!-- Apply Leave Modal (hidden by default) -->
+<div id="apply-leave-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+  <div class="bg-white dark:bg-blue-800 rounded-xl p-6 w-full max-w-2xl relative">
+    <!-- Close Button -->
+    <button id="close-leave-modal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-900 dark:hover:text-white">
+      <i class="fas fa-times text-xl"></i>
+    </button>
+
+    <!-- Form -->
+    <form method="POST" action="{% url 'employees:leave' %}">
+      {% csrf_token %}
+      <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Apply for Leave</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="leave_type" class="block mb-1 text-gray-700 dark:text-gray-300">Leave Type</label>
+          <select name="leave_type" id="leave_type" class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-blue-900 text-gray-900 dark:text-white">
+            <option value="Annual">Annual</option>
+            <option value="Sick">Sick</option>
+            <option value="Personal">Personal</option>
+            <option value="Maternity">Maternity</option>
+            <option value="Emergency">Emergency</option>
+          </select>
+        </div>
+        <div>
+          <label for="number_of_days" class="block mb-1 text-gray-700 dark:text-gray-300">Number of Days</label>
+          <input type="text" name="number_of_days" placeholder="Number of Days" class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-blue-900 text-gray-900 dark:text-white">
+        </div>
+        <div>
+          <label for="start_date" class="block mb-1 text-gray-700 dark:text-gray-300">Start Date</label>
+          <input type="date" name="start_date" id="start_date" class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-blue-900 text-gray-900 dark:text-white">
+        </div>
+        <div>
+          <label for="end_date" class="block mb-1 text-gray-700 dark:text-gray-300">End Date</label>
+          <input type="date" name="end_date" id="end_date" class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-blue-900 text-gray-900 dark:text-white">
+        </div>
+        <div class="md:col-span-2">
+          <label for="reason" class="block mb-1 text-gray-700 dark:text-gray-300">Reason</label>
+          <textarea name="reason" id="reason" rows="3" placeholder="Please provide reason for leave..."class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-blue-900 text-gray-900 dark:text-white"></textarea>
+        </div>
+      </div>
+      <div class="mt-4 text-right">
+        <button type="submit"  class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium">Submit Application</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+      <!-- Leave Balances -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white dark:bg-blue-800 rounded-xl p-6 border border-gray-200 dark:border-blue-700 text-center">
+          <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-3">
+            <i class="fas fa-calendar-day text-blue-600 text-2xl"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Annual Leave</h3>
+          <p class="text-3xl font-bold text-blue-600">18</p>
+          <p class="text-sm text-gray-600 dark:text-gray-300">days remaining</p>
+        </div>
+        <div class="bg-white dark:bg-blue-800 rounded-xl p-6 border border-gray-200 dark:border-blue-700 text-center">
+          <div class="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-3">
+            <i class="fas fa-user-md text-green-600 text-2xl"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Sick Leave</h3>
+          <p class="text-3xl font-bold text-green-600">8</p>
+          <p class="text-sm text-gray-600 dark:text-gray-300">days remaining</p>
+        </div>
+        <div class="bg-white dark:bg-blue-800 rounded-xl p-6 border border-gray-200 dark:border-blue-700 text-center">
+          <div class="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mx-auto mb-3">
+            <i class="fas fa-home text-yellow-600 text-2xl"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Personal Leave</h3>
+          <p class="text-3xl font-bold text-yellow-600">5</p>
+          <p class="text-sm text-gray-600 dark:text-gray-300">days remaining</p>
+        </div>
+        <div class="bg-white dark:bg-blue-800 rounded-xl p-6 border border-gray-200 dark:border-blue-700 text-center">
+          <div class="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-3">
+            <i class="fas fa-baby text-purple-600 text-2xl"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Maternity Leave</h3>
+          <p class="text-3xl font-bold text-purple-600">90</p>
+          <p class="text-sm text-gray-600 dark:text-gray-300">days available</p>
+        </div>
+      </div>
+
+      <!-- Leave Requests -->
+<div class="bg-white dark:bg-blue-800 rounded-xl border border-gray-200 dark:border-blue-700 mt-6">
+  <div class="px-6 py-4 border-b border-gray-200 dark:border-blue-700">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">My Leave Requests</h3>
+  </div>
+
+  {% if leave_requests %}
+    <div class="p-6 space-y-4">
+      {% for leave in leave_requests %}
+        <div class="border rounded-lg p-4 flex justify-between items-center bg-gray-50 dark:bg-blue-900">
+          <div>
+            <h4 class="font-semibold text-gray-900 dark:text-white">{{ leave.leave_type }} Leave</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">
+              {{ leave.start_date }} - {{ leave.end_date }} ({{ leave.number_of_days }} days)
+            </p>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Reason: {{ leave.reason }}</p>
+          </div>
+          <div>
+            {% if leave.status == 'Approved' %}
+              <span class="px-3 py-1 rounded-full bg-green-600 text-white text-sm">Approved</span>
+            {% elif leave.status == 'Rejected' %}
+              <span class="px-3 py-1 rounded-full bg-red-600 text-white text-sm">Rejected</span>
+            {% else %}
+              <span class="px-3 py-1 rounded-full bg-yellow-500 text-white text-sm">Pending</span>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="p-6 text-center text-gray-600 dark:text-gray-300">
+      <i class="fas fa-calendar-times text-4xl mb-4"></i>
+      <p>No leave requests found. Click "Apply for Leave" to create your first request.</p>
+    </div>
+  {% endif %}
+</div>
+
+
+    </main>
+  </div>
+
+  <!-- Scripts -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const body = document.body;
+  const sidebar = document.getElementById('sidebar');
+  const sidebarToggle = document.getElementById('sidebar-toggle-top');
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+  const profileDropdown = document.getElementById('profile-dropdown');
+  const profileMenu = document.getElementById('profile-menu');
+
+  const applyLeaveBtn = document.getElementById('apply-leave-btn');
+  const applyLeaveModal = document.getElementById('apply-leave-modal'); // modal container
+  const closeLeaveModal = document.getElementById('close-leave-modal');
+
+  // Sidebar toggle
+  if (sidebarToggle && sidebar) {
+    sidebarToggle.addEventListener('click', () => sidebar.classList.toggle('-translate-x-full'));
+  }
+
+  // Theme toggle
+  if (themeToggle && themeIcon) {
+    themeToggle.addEventListener('click', () => {
+      body.classList.toggle('dark');
+      themeIcon.classList.replace(
+        body.classList.contains('dark') ? 'fa-moon' : 'fa-sun',
+        body.classList.contains('dark') ? 'fa-sun' : 'fa-moon'
+      );
+    });
+  }
+
+  // Profile dropdown
+  if (profileDropdown && profileMenu) {
+    profileDropdown.addEventListener('click', () => profileMenu.classList.toggle('hidden'));
+    window.addEventListener('click', e => {
+      if(!profileDropdown.contains(e.target) && !profileMenu.contains(e.target)) {
+        profileMenu.classList.add('hidden');
+      }
+    });
+  }
+
+  // Open modal
+  if(applyLeaveBtn && applyLeaveModal) {
+    applyLeaveBtn.addEventListener('click', () => {
+      applyLeaveModal.classList.remove('hidden');
+    });
+  }
+
+  // Close modal
+  if(closeLeaveModal && applyLeaveModal) {
+    closeLeaveModal.addEventListener('click', () => {
+      applyLeaveModal.classList.add('hidden');
+    });
+  }
+
+  // Close modal on clicking outside the modal content
+  if(applyLeaveModal) {
+    applyLeaveModal.addEventListener('click', (e) => {
+      if(e.target === applyLeaveModal) {
+        applyLeaveModal.classList.add('hidden');
+      }
+    });
+  }
+});
+</script>
+
+
+
+</body>
+</html>

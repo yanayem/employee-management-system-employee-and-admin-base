@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payroll | Employee Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
+
+  {% include "sideandtopbar.html" %}
+
+  <main class="flex-1 p-6 md:ml-64 mt-16">
+
+    <div class="mb-6">
+      <h1 class="text-3xl font-bold">Payroll</h1>
+      <p class="text-gray-600 dark:text-gray-300">View your salary details and download payslips</p>
+    </div>
+
+    <!-- Salary Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow">
+        <h3 class="text-lg font-semibold mb-2">Current Salary</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-300">Gross Salary</p>
+<p class="text-3xl font-bold text-green-600">
+  {% if current_salary %}
+    ৳{{ current_salary.gross_salary }}
+  {% else %}
+    ৳0
+  {% endif %}
+</p>
+
+<p class="text-sm text-gray-500 dark:text-gray-300 mt-2">Net Pay</p>
+<p class="text-3xl font-bold text-blue-600">
+  {% if current_salary %}
+    ৳{{ current_salary.net_pay }}
+  {% else %}
+    ৳0
+  {% endif %}
+</p>
+
+        <p class="text-sm text-gray-500 dark:text-gray-300">per month</p>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow">
+        <h3 class="text-lg font-semibold mb-2">This Month</h3>
+        <p class="text-3xl font-bold text-blue-600">
+          {% if current_salary %}
+            ৳{{ current_salary.net_pay }}
+          {% else %}
+            ৳0
+          {% endif %}
+        </p>
+        <p class="text-sm text-gray-500 dark:text-gray-300">net pay</p>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow">
+        <h3 class="text-lg font-semibold mb-2">YTD Earnings</h3>
+        <p class="text-3xl font-bold text-purple-600">৳{{ ytd_earnings|default:0 }}</p>
+        <p class="text-sm text-gray-500 dark:text-gray-300">year to date</p>
+      </div>
+    </div>
+
+    <!-- Payslip History -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="text-lg font-semibold">Payslip History</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead class="bg-gray-100 dark:bg-gray-700">
+            <tr>
+              <th class="py-4 px-6 text-sm font-semibold">Month</th>
+              <th class="py-4 px-6 text-sm font-semibold">Gross Salary</th>
+              <th class="py-4 px-6 text-sm font-semibold">Deductions</th>
+              <th class="py-4 px-6 text-sm font-semibold">Net Pay</th>
+              <th class="py-4 px-6 text-sm font-semibold">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for payroll in payrolls %}
+            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <td class="py-4 px-6">{{ payroll.month|date:"F Y" }}</td>
+              <td class="py-4 px-6">৳{{ payroll.gross_salary }}</td>
+              <td class="py-4 px-6 text-red-600">৳{{ payroll.deductions }}</td>
+              <td class="py-4 px-6 text-green-600 font-semibold">৳{{ payroll.net_pay }}</td>
+              <td class="py-4 px-6">
+                {% if payroll.payslip_file %}
+                <button 
+                  class="text-blue-600 hover:text-blue-800 text-sm" 
+                  onclick="openPayslipModal('{{ payroll.payslip_file.url }}')">
+                  <i class="fas fa-eye mr-1"></i>Preview
+                </button>
+                <a href="{{ payroll.payslip_file.url }}" class="text-blue-600 hover:text-blue-800 text-sm ml-2" download>
+                  <i class="fas fa-download mr-1"></i>Download
+                </a>
+                {% else %}
+                <span class="text-gray-400 text-sm">N/A</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center py-4 text-gray-500 dark:text-gray-300">No payslips available</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Modal for Payslip Preview -->
+  <div id="payslip-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-xl w-11/12 md:w-3/4 h-4/5 p-4 relative flex flex-col">
+      <button class="absolute top-2 right-2 text-gray-700 dark:text-gray-300" onclick="closePayslipModal()">
+        <i class="fas fa-times text-2xl"></i>
+      </button>
+      <iframe id="payslip-preview" class="w-full h-full rounded" src="" frameborder="0"></iframe>
+    </div>
+  </div>
+
+  <script>
+    function openPayslipModal(url) {
+      const modal = document.getElementById('payslip-modal');
+      const iframe = document.getElementById('payslip-preview');
+      iframe.src = url;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    function closePayslipModal() {
+      const modal = document.getElementById('payslip-modal');
+      const iframe = document.getElementById('payslip-preview');
+      iframe.src = '';
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  </script>
+
+</body>
+</html>

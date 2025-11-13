@@ -1,0 +1,1037 @@
+{% include "sideandtopbar.html" %}
+
+
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Portal - Managely</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <style>
+        body {
+            box-sizing: border-box;
+        }
+        
+        /* Theme Variables */
+        .light {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+        
+        .dark {
+            --bg-primary: #1e293b;
+            --bg-secondary: #334155;
+            --bg-tertiary: #475569;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border-color: #475569;
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Theme Classes */
+        .theme-bg-primary { background-color: var(--bg-primary); }
+        .theme-bg-secondary { background-color: var(--bg-secondary); }
+        .theme-bg-tertiary { background-color: var(--bg-tertiary); }
+        .theme-text-primary { color: var(--text-primary); }
+        .theme-text-secondary { color: var(--text-secondary); }
+        .theme-border { border-color: var(--border-color); }
+        
+        /* Custom Styles */
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px var(--shadow);
+        }
+        
+        .nav-item {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            margin: 4px 0;
+        }
+        .nav-item:hover {
+            background-color: var(--bg-tertiary);
+            transform: translateX(4px);
+        }
+        .nav-item.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+        
+        .sidebar {
+            transition: transform 0.3s ease;
+        }
+        .sidebar.open {
+            transform: translateX(0);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+        }
+        
+        .modal-backdrop {
+            backdrop-filter: blur(8px);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-pending {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-approved {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-rejected {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .status-present {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-absent {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .status-late {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .pulse-dot {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+            height: 8px;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .notification-dot {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 8px;
+            height: 8px;
+            background-color: #3E7E83;
+            border-radius: 50%;
+            border: 2px solid var(--bg-primary);
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+ </head>
+
+ <body class="light theme-bg-secondary">
+    <!-- Performance Page -->
+     <div id="performance-page" class="p-6 hidden">
+      <div class="mb-6">
+       <h1 class="text-3xl font-bold theme-text-primary">Performance</h1>
+       <p class="theme-text-secondary">Track your performance metrics and goals</p>
+      </div><!-- Performance Overview -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+       <div class="theme-bg-primary rounded-xl p-6 theme-border border text-center">
+        <div class="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fas fa-star text-green-600 text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-semibold theme-text-primary mb-1">Overall Rating</h3>
+        <p class="text-3xl font-bold text-green-600">4.8</p>
+        <p class="text-sm theme-text-secondary">out of 5.0</p>
+       </div>
+       <div class="theme-bg-primary rounded-xl p-6 theme-border border text-center">
+        <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fas fa-target text-blue-600 text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-semibold theme-text-primary mb-1">Goals Achieved</h3>
+        <p class="text-3xl font-bold text-blue-600">8</p>
+        <p class="text-sm theme-text-secondary">out of 10</p>
+       </div>
+       <div class="theme-bg-primary rounded-xl p-6 theme-border border text-center">
+        <div class="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fas fa-project-diagram text-purple-600 text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-semibold theme-text-primary mb-1">Projects Completed</h3>
+        <p class="text-3xl font-bold text-purple-600">12</p>
+        <p class="text-sm theme-text-secondary">this year</p>
+       </div>
+       <div class="theme-bg-primary rounded-xl p-6 theme-border border text-center">
+        <div class="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fas fa-trophy text-yellow-600 text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-semibold theme-text-primary mb-1">Achievements</h3>
+        <p class="text-3xl font-bold text-yellow-600">5</p>
+        <p class="text-sm theme-text-secondary">badges earned</p>
+       </div>
+      </div><!-- Performance Details -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><!-- Skills Assessment -->
+       <div class="theme-bg-primary rounded-xl p-6 theme-border border">
+        <h3 class="text-lg font-semibold theme-text-primary mb-4">Skills Assessment</h3>
+        <div class="space-y-4">
+         <div>
+          <div class="flex justify-between mb-2"><span class="theme-text-primary">Technical Skills</span> <span class="theme-text-secondary">90%</span>
+          </div>
+          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+           <div class="progress-bar h-2 rounded-full" style="width: 90%"></div>
+          </div>
+         </div>
+         <div>
+          <div class="flex justify-between mb-2"><span class="theme-text-primary">Communication</span> <span class="theme-text-secondary">85%</span>
+          </div>
+          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+           <div class="progress-bar h-2 rounded-full" style="width: 85%"></div>
+          </div>
+         </div>
+         <div>
+          <div class="flex justify-between mb-2"><span class="theme-text-primary">Leadership</span> <span class="theme-text-secondary">75%</span>
+          </div>
+          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+           <div class="progress-bar h-2 rounded-full" style="width: 75%"></div>
+          </div>
+         </div>
+         <div>
+          <div class="flex justify-between mb-2"><span class="theme-text-primary">Problem Solving</span> <span class="theme-text-secondary">88%</span>
+          </div>
+          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+           <div class="progress-bar h-2 rounded-full" style="width: 88%"></div>
+          </div>
+         </div>
+        </div>
+       </div><!-- Recent Feedback -->
+       <div class="theme-bg-primary rounded-xl p-6 theme-border border">
+        <h3 class="text-lg font-semibold theme-text-primary mb-4">Recent Feedback</h3>
+        <div class="space-y-4">
+         <div class="p-4 theme-bg-secondary rounded-lg">
+          <div class="flex items-start space-x-3">
+           <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center"><i class="fas fa-user text-blue-600 text-sm"></i>
+           </div>
+           <div class="flex-1">
+            <p class="text-sm theme-text-primary mb-1">"Excellent work on the recent project. Great attention to detail and timely delivery."</p>
+            <p class="text-xs theme-text-secondary">- Shoumikh Sheikh, Engineering Manager</p>
+           </div>
+          </div>
+         </div>
+         <div class="p-4 theme-bg-secondary rounded-lg">
+          <div class="flex items-start space-x-3">
+           <div class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center"><i class="fas fa-user text-green-600 text-sm"></i>
+           </div>
+           <div class="flex-1">
+            <p class="text-sm theme-text-primary mb-1">"Shows great initiative and problem-solving skills. Keep up the good work!"</p>
+            <p class="text-xs theme-text-secondary">- HR Department</p>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+  <script>
+        // Default configuration
+        const defaultConfig = {
+            company_name: "Managely",
+            company_tagline: "Employee Portal",
+            employee_name: "Saadmaan ",
+            employee_position: "Software Engineer",
+            employee_department: "Engineering"
+        };
+
+        // Data handler for leave requests
+        let currentLeaveData = [];
+        let currentRecordCount = 0;
+
+        const dataHandler = {
+            onDataChanged(data) {
+                currentLeaveData = data;
+                currentRecordCount = data.length;
+                renderLeaveRequests(data);
+            }
+        };
+
+        // Initialize Data SDK
+        async function initializeDataSDK() {
+            if (window.dataSdk) {
+                const initResult = await window.dataSdk.init(dataHandler);
+                if (!initResult.isOk) {
+                    console.error("Failed to initialize data SDK");
+                }
+            }
+        }
+
+        // Element SDK implementation
+        const element = {
+            defaultConfig,
+            onConfigChange: async (config) => {
+                // Update company name across all pages
+                const companyNameElements = [
+                    'company-name-role', 'company-name-admin-login', 'company-name-employee-login',
+                    'company-name-admin-nav', 'company-name-nav'
+                ];
+                companyNameElements.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = config.company_name || defaultConfig.company_name;
+                    }
+                });
+
+                // Update company tagline
+                const taglineElements = ['company-tagline-role'];
+                taglineElements.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = config.company_tagline || defaultConfig.company_tagline;
+                    }
+                });
+
+                // Update employee name
+                const employeeNameElements = ['employee-name-nav', 'employee-name-dashboard', 'profile-name'];
+                employeeNameElements.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = config.employee_name || defaultConfig.employee_name;
+                    }
+                });
+
+                // Update employee position
+                const positionElements = ['employee-position-nav', 'profile-position'];
+                positionElements.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = config.employee_position || defaultConfig.employee_position;
+                    }
+                });
+
+                // Update employee department
+                const departmentElement = document.getElementById('profile-department');
+                if (departmentElement) {
+                    departmentElement.textContent = `${config.employee_department || defaultConfig.employee_department} Department`;
+                }
+            },
+            mapToCapabilities: (config) => ({
+                recolorables: [],
+                borderables: [],
+                fontEditable: undefined,
+                fontSizeable: undefined
+            }),
+            mapToEditPanelValues: (config) => new Map([
+                ["company_name", config.company_name || defaultConfig.company_name],
+                ["company_tagline", config.company_tagline || defaultConfig.company_tagline],
+                ["employee_name", config.employee_name || defaultConfig.employee_name],
+                ["employee_position", config.employee_position || defaultConfig.employee_position],
+                ["employee_department", config.employee_department || defaultConfig.employee_department]
+            ])
+        };
+
+        // Initialize Element SDK
+        if (window.elementSdk) {
+            window.elementSdk.init(element);
+        }
+
+        // Theme management
+        let isDarkMode = false;
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            const body = document.body;
+            const themeIcons = document.querySelectorAll('#theme-toggle i, #theme-toggle-login i');
+            if (isDarkMode) {
+                body.classList.remove('light');
+                body.classList.add('dark');
+                themeIcons.forEach(icon => {
+                    icon.classList.remove('fa-moon');
+                    icon.classList.add('fa-sun');
+                });
+            } else {
+                body.classList.remove('dark');
+                body.classList.add('light');
+                themeIcons.forEach(icon => {
+                    icon.classList.remove('fa-sun');
+                    icon.classList.add('fa-moon');
+                });
+            }
+        }
+
+        // Navigation management
+        function showPage(pageId) {
+            // Hide all pages
+            const pages = document.querySelectorAll('[id$="-page"]');
+            pages.forEach(page => page.classList.add('hidden'));
+            
+            // Show selected page
+            const targetPage = document.getElementById(pageId + '-page');
+            if (targetPage) {
+                targetPage.classList.remove('hidden');
+            }
+            
+            // Update navigation active state
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+            const activeNavItem = document.querySelector(`[data-page="${pageId}"]`);
+            if (activeNavItem) {
+                activeNavItem.classList.add('active');
+            }
+        }
+
+        // Initialize charts
+        function initializeCharts() {
+            // Employee Attendance Chart
+            const attendanceCtx = document.getElementById('attendanceChart');
+            if (attendanceCtx && typeof Chart !== 'undefined') {
+                new Chart(attendanceCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                        datasets: [{
+                            label: 'Attendance %',
+                            data: [95, 98, 92, 96],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Employee Performance Chart
+            const performanceCtx = document.getElementById('performanceChart');
+            if (performanceCtx && typeof Chart !== 'undefined') {
+                new Chart(performanceCtx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Technical Skills', 'Communication', 'Leadership', 'Problem Solving', 'Teamwork'],
+                        datasets: [{
+                            label: 'Performance',
+                            data: [90, 85, 75, 88, 92],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            pointBackgroundColor: '#3b82f6'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Initialize admin charts
+        function initializeAdminCharts() {
+            if (typeof Chart === 'undefined') return;
+
+            // Employee Growth Chart
+            const employeeGrowthCtx = document.getElementById('adminEmployeeGrowthChart');
+            if (employeeGrowthCtx) {
+                new Chart(employeeGrowthCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                        datasets: [{
+                            label: 'Employees',
+                            data: [120, 125, 130, 135, 140, 142, 145, 148, 150, 152, 154, 156],
+                            borderColor: '#045B62',
+                            backgroundColor: 'rgba(4, 91, 98, 0.15)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: false }
+                        }
+                    }
+                });
+            }
+
+            // Admin Attendance Chart
+            const adminAttendanceCtx = document.getElementById('adminAttendanceChart');
+            if (adminAttendanceCtx) {
+                new Chart(adminAttendanceCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                        datasets: [{
+                            label: 'Present',
+                            data: [148, 152, 144, 142],
+                            backgroundColor: '#045B62',
+                        }, {
+                            label: 'Absent',
+                            data: [8, 4, 12, 14],
+                            backgroundColor: '#4F8C91',
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: true, position: 'top' }
+                        },
+                        scales: {
+                            x: { stacked: true },
+                            y: { stacked: true, beginAtZero: true }
+                        }
+                    }
+                });
+            }
+
+            // Department Distribution Chart
+            const departmentCtx = document.getElementById('adminDepartmentChart');
+            if (departmentCtx) {
+                new Chart(departmentCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance'],
+                        datasets: [{
+                            data: [45, 25, 30, 15, 20],
+                            backgroundColor: [
+                                '#045B62',
+                                '#4F8C91',
+                                '#5CA4A9',
+                                '#3E7E83',
+                                '#034449'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            }
+
+            // Leave Status Chart
+            const leaveStatusCtx = document.getElementById('adminLeaveStatusChart');
+            if (leaveStatusCtx) {
+                new Chart(leaveStatusCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Approved', 'Pending', 'Rejected'],
+                        datasets: [{
+                            data: [65, 25, 10],
+                            backgroundColor: ['#045B62', '#4F8C91', '#5CA4A9']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            }
+
+            // Payroll Trend Chart
+            const payrollCtx = document.getElementById('adminPayrollChart');
+            if (payrollCtx) {
+                new Chart(payrollCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                        datasets: [{
+                            label: 'Payroll (৳)',
+                            data: [950000, 980000, 1020000, 1050000, 1080000, 1100000, 1120000, 1140000, 1160000, 1180000, 1190000, 1200000],
+                            borderColor: '#045B62',
+                            backgroundColor: 'rgba(4, 91, 98, 0.15)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { 
+                                beginAtZero: false,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '৳' + (value / 1000) + 'K';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Salary Distribution Chart
+            const salaryDistCtx = document.getElementById('adminSalaryDistributionChart');
+            if (salaryDistCtx) {
+                new Chart(salaryDistCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['20K-40K', '40K-60K', '60K-80K', '80K-100K', '100K+'],
+                        datasets: [{
+                            label: 'Employees',
+                            data: [25, 45, 35, 30, 21],
+                            backgroundColor: '#045B62'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Render leave requests
+        function renderLeaveRequests(data) {
+            const container = document.getElementById('leave-requests-container');
+            if (!container) return;
+
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-calendar-times text-4xl theme-text-secondary mb-4"></i>
+                        <p class="theme-text-secondary">No leave requests found. Click "Apply for Leave" to create your first request.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const requestsHTML = data.map(request => {
+                const statusClass = request.status === 'approved' ? 'status-approved' : 
+                                  request.status === 'rejected' ? 'status-rejected' : 'status-pending';
+                
+                return `
+                    <div class="p-4 theme-bg-secondary rounded-lg mb-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <h4 class="theme-text-primary font-medium">${request.type.charAt(0).toUpperCase() + request.type.slice(1)} Leave</h4>
+                                <p class="text-sm theme-text-secondary">${request.from_date} to ${request.to_date} (${request.days} days)</p>
+                            </div>
+                            <span class="status-badge ${statusClass}">${request.status}</span>
+                        </div>
+                        <p class="text-sm theme-text-secondary mb-2"><strong>Reason:</strong> ${request.reason}</p>
+                        <p class="text-xs theme-text-secondary">Applied on: ${new Date(request.created_at).toLocaleDateString()}</p>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = requestsHTML;
+        }
+
+        // Submit leave application
+        async function submitLeaveApplication(formData) {
+            if (currentRecordCount >= 999) {
+                showToast("Maximum limit of 999 leave requests reached. Please contact HR.", "error");
+                return;
+            }
+
+            const submitBtn = document.querySelector('#leave-form button[type="submit"]');
+            const submitText = document.getElementById('leave-submit-text');
+            const loadingIcon = document.getElementById('leave-loading');
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitText.textContent = 'Submitting...';
+            loadingIcon.classList.remove('hidden');
+
+            try {
+                const leaveData = {
+                    id: Date.now().toString(),
+                    type: formData.type,
+                    from_date: formData.fromDate,
+                    to_date: formData.toDate,
+                    days: parseInt(formData.days),
+                    reason: formData.reason,
+                    status: 'pending',
+                    employee_id: 'EMP001',
+                    employee_name: 'Saadmaan ',
+                    created_at: new Date().toISOString()
+                };
+
+                if (window.dataSdk) {
+                    const result = await window.dataSdk.create(leaveData);
+                    if (result.isOk) {
+                        showToast("Leave application submitted successfully!", "success");
+                        document.getElementById('leave-modal').classList.add('hidden');
+                        document.getElementById('leave-form').reset();
+                    } else {
+                        showToast("Failed to submit leave application. Please try again.", "error");
+                    }
+                } else {
+                    showToast("Data service unavailable. Please try again later.", "error");
+                }
+            } catch (error) {
+                showToast("An error occurred. Please try again.", "error");
+            } finally {
+                // Reset loading state
+                submitBtn.disabled = false;
+                submitText.textContent = 'Submit Application';
+                loadingIcon.classList.add('hidden');
+            }
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg text-white max-w-sm fade-in ${
+                type === 'success' ? 'bg-green-600' : 
+                type === 'error' ? 'bg-red-600' : 'bg-blue-600'
+            }`;
+            toast.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+
+        // Check if external resources loaded properly
+        function checkResourcesLoaded() {
+            // Check if Tailwind CSS loaded
+            const testElement = document.createElement('div');
+            testElement.className = 'hidden';
+            document.body.appendChild(testElement);
+            const isHidden = window.getComputedStyle(testElement).display === 'none';
+            document.body.removeChild(testElement);
+            
+            if (!isHidden) {
+                console.warn('Tailwind CSS may not have loaded properly');
+                const fallbackCSS = `
+                    .hidden { display: none !important; }
+                    .flex { display: flex !important; }
+                    .grid { display: grid !important; }
+                    .block { display: block !important; }
+                    .w-full { width: 100% !important; }
+                    .h-full { height: 100% !important; }
+                    .min-h-full { min-height: 100% !important; }
+                    .p-4 { padding: 1rem !important; }
+                    .p-6 { padding: 1.5rem !important; }
+                    .px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
+                    .py-3 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+                    .mb-4 { margin-bottom: 1rem !important; }
+                    .mb-6 { margin-bottom: 1.5rem !important; }
+                    .text-center { text-align: center !important; }
+                    .text-white { color: white !important; }
+                    .bg-blue-600 { background-color: #2563eb !important; }
+                    .rounded-lg { border-radius: 0.5rem !important; }
+                    .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important; }
+                    .border { border: 1px solid #e5e7eb !important; }
+                    .cursor-pointer { cursor: pointer !important; }
+                `;
+                const style = document.createElement('style');
+                style.textContent = fallbackCSS;
+                document.head.appendChild(style);
+            }
+
+            // Check if Chart.js loaded
+            if (typeof Chart === 'undefined') {
+                console.warn('Chart.js may not have loaded properly');
+                const chartContainers = document.querySelectorAll('.chart-container');
+                chartContainers.forEach(container => {
+                    container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:200px;background:#f3f4f6;border-radius:8px;color:#6b7280;">Chart unavailable - external resource failed to load</div>';
+                });
+            }
+        }
+
+        // Navigation functions
+        function showAdminPage(pageId) {
+            // Hide all admin pages
+            const adminPages = document.querySelectorAll('[id^="admin-"][id$="-page"]');
+            adminPages.forEach(page => page.classList.add('hidden'));
+            
+            // Show selected admin page
+            const targetPage = document.getElementById('admin-' + pageId + '-page');
+            if (targetPage) {
+                targetPage.classList.remove('hidden');
+            }
+            
+            // Update admin navigation active state
+            const adminNavItems = document.querySelectorAll('[data-admin-page]');
+            adminNavItems.forEach(item => item.classList.remove('active'));
+            const activeNavItem = document.querySelector(`[data-admin-page="${pageId}"]`);
+            if (activeNavItem) {
+                activeNavItem.classList.add('active');
+            }
+        }
+
+        function showEmployeePage(pageId) {
+            // Hide all employee pages
+            const employeePages = document.querySelectorAll('[id$="-page"]:not([id^="admin-"]):not([id*="login"]):not([id*="role"])');
+            employeePages.forEach(page => page.classList.add('hidden'));
+            
+            // Show selected employee page
+            const targetPage = document.getElementById(pageId + '-page');
+            if (targetPage) {
+                targetPage.classList.remove('hidden');
+            }
+            
+            // Update employee navigation active state
+            const employeeNavItems = document.querySelectorAll('[data-page]');
+            employeeNavItems.forEach(item => item.classList.remove('active'));
+            const activeNavItem = document.querySelector(`[data-page="${pageId}"]`);
+            if (activeNavItem) {
+                activeNavItem.classList.add('active');
+            }
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(checkResourcesLoaded, 1000);
+            initializeDataSDK();
+
+            // Portal selection
+            document.getElementById('admin-portal-card').addEventListener('click', function() {
+                document.getElementById('role-selection-page').classList.add('hidden');
+                document.getElementById('admin-login-page').classList.remove('hidden');
+            });
+
+            document.getElementById('employee-portal-card').addEventListener('click', function() {
+                document.getElementById('role-selection-page').classList.add('hidden');
+                document.getElementById('employee-login-page').classList.remove('hidden');
+            });
+
+            // Back to role selection
+            document.getElementById('back-to-role-admin').addEventListener('click', function() {
+                document.getElementById('admin-login-page').classList.add('hidden');
+                document.getElementById('role-selection-page').classList.remove('hidden');
+            });
+
+            document.getElementById('back-to-role-employee').addEventListener('click', function() {
+                document.getElementById('employee-login-page').classList.add('hidden');
+                document.getElementById('role-selection-page').classList.remove('hidden');
+            });
+
+            // Admin login form
+            document.getElementById('admin-login-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                document.getElementById('admin-login-page').classList.add('hidden');
+                document.getElementById('admin-app').classList.remove('hidden');
+                initializeAdminCharts();
+            });
+
+            // Employee login form
+            document.getElementById('employee-login-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                document.getElementById('employee-login-page').classList.add('hidden');
+                document.getElementById('employee-app').classList.remove('hidden');
+                initializeCharts();
+            });
+
+            // Theme toggles
+            document.getElementById('theme-toggle-role').addEventListener('click', toggleTheme);
+            document.getElementById('theme-toggle-admin-login').addEventListener('click', toggleTheme);
+            document.getElementById('theme-toggle-employee-login').addEventListener('click', toggleTheme);
+            document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+            document.getElementById('admin-theme-toggle').addEventListener('click', toggleTheme);
+
+            // Logout handlers
+            document.getElementById('logout-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('employee-app').classList.add('hidden');
+                document.getElementById('role-selection-page').classList.remove('hidden');
+            });
+
+            document.getElementById('admin-logout-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('admin-app').classList.add('hidden');
+                document.getElementById('role-selection-page').classList.remove('hidden');
+            });
+
+            // Admin Navigation
+            document.querySelectorAll('[data-admin-page]').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const pageId = this.getAttribute('data-admin-page');
+                    showAdminPage(pageId);
+                });
+            });
+
+            // Employee Navigation
+            document.querySelectorAll('[data-page]').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const pageId = this.getAttribute('data-page');
+                    showEmployeePage(pageId);
+                });
+            });
+
+            // Sidebar toggles for mobile
+            document.getElementById('sidebar-toggle').addEventListener('click', function() {
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.toggle('open');
+            });
+
+            document.getElementById('admin-sidebar-toggle').addEventListener('click', function() {
+                const sidebar = document.getElementById('admin-sidebar');
+                sidebar.classList.toggle('open');
+            });
+
+            // Profile dropdowns
+            document.getElementById('profile-dropdown').addEventListener('click', function() {
+                const menu = document.getElementById('profile-menu');
+                menu.classList.toggle('hidden');
+            });
+
+            document.getElementById('admin-profile-dropdown').addEventListener('click', function() {
+                const menu = document.getElementById('admin-profile-menu');
+                menu.classList.toggle('hidden');
+            });
+
+            // Apply leave buttons
+            document.getElementById('apply-leave-btn').addEventListener('click', function() {
+                document.getElementById('leave-modal').classList.remove('hidden');
+            });
+            
+            document.getElementById('apply-leave-modal-btn').addEventListener('click', function() {
+                document.getElementById('leave-modal').classList.remove('hidden');
+            });
+
+            // Leave modal
+            document.getElementById('cancel-leave-btn').addEventListener('click', function() {
+                document.getElementById('leave-modal').classList.add('hidden');
+            });
+
+            document.getElementById('leave-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
+                }
+            });
+
+            // Leave form submission
+            document.getElementById('leave-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    type: document.getElementById('leave-type').value,
+                    days: document.getElementById('leave-days').value,
+                    fromDate: document.getElementById('leave-from').value,
+                    toDate: document.getElementById('leave-to').value,
+                    reason: document.getElementById('leave-reason').value
+                };
+
+                if (!formData.type || !formData.days || !formData.fromDate || !formData.toDate || !formData.reason) {
+                    showToast("Please fill in all required fields.", "error");
+                    return;
+                }
+
+                submitLeaveApplication(formData);
+            });
+
+            // Close profile menus when clicking outside
+            document.addEventListener('click', function(e) {
+                // Employee profile menu
+                const profileDropdown = document.getElementById('profile-dropdown');
+                const profileMenu = document.getElementById('profile-menu');
+                if (profileDropdown && profileMenu && !profileDropdown.contains(e.target)) {
+                    profileMenu.classList.add('hidden');
+                }
+
+                // Admin profile menu
+                const adminProfileDropdown = document.getElementById('admin-profile-dropdown');
+                const adminProfileMenu = document.getElementById('admin-profile-menu');
+                if (adminProfileDropdown && adminProfileMenu && !adminProfileDropdown.contains(e.target)) {
+                    adminProfileMenu.classList.add('hidden');
+                }
+            });
+
+            // Initialize charts after a short delay
+            setTimeout(initializeCharts, 100);
+        });
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'996c3520655425b1',t:'MTc2MTg0MDg4Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

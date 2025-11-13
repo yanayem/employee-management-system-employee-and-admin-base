@@ -1,0 +1,252 @@
+# employees/views.py
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.utils import timezone
+from django.db.models import Sum
+from .models import Attendance, LeaveRequest, Payroll, Performance, Project
+from .forms import LeaveRequestForm
+from accounts.models import EmployeeProfile
+
+
+def get_logged_in_employee(request):
+    """
+    Retrieve the currently logged-in employee using session.
+    Returns None if not found.
+    """
+    employee_id = request.session.get('employee_id')
+    if not employee_id:
+        return None
+    try:
+        return EmployeeProfile.objects.get(employee_id=employee_id)
+    except EmployeeProfile.DoesNotExist:
+        return None
+
+
+# ===============================
+# Dashboard
+# ===============================
+@login_required
+def dashboard(request):
+    return render(request, 'sideandtopbar.html')
+
+
+# ===============================
+# Attendance
+# ===============================
+@login_required
+def attendance_view(request):
+    employee = get_logged_in_employee(request)
+    if not employee:
+        return redirect('accounts:login')
+
+    today = timezone.localdate()
+    attendance, created = Attendance.objects.get_or_create(employee=employee, date=today)
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        now = timezone.localtime().time()
+
+        if action == "check_in" and not attendance.check_in:
+            attendance.check_in = now
+            attendance.status = "Present"
+            attendance.save()
+        elif action == "check_out" and not attendance.check_out:
+            attendance.check_out = now
+            attendance.save()
+
+        return redirect('employees:attendance')
+
+    week_records = Attendance.objects.filter(
+        employee=employee,
+        date__gte=today - timezone.timedelta(days=7)
+    ).order_by('-date')
+
+    month_records = Attendance.objects.filter(
+        employee=employee,
+        date__month=today.month
+    ).order_by('-date')
+
+    total_present = month_records.filter(status="Present").count()
+    late_days = month_records.filter(status="Late").count()
+    attendance_percent = round((total_present / month_records.count()) * 100, 1) if month_records.exists() else 0
+
+    # Total hours worked this week
+    total_week_hours = sum(
+        ((timezone.datetime.combine(r.date, r.check_out) - timezone.datetime.combine(r.date, r.check_in)).total_seconds() / 3600)
+        for r in week_records if r.check_in and r.check_out
+    )
+
+    context = {
+        "attendance": attendance,
+        "week_records": week_records,
+        "month_records": month_records,
+        "attendance_percent": attendance_percent,
+        "late_days": late_days,
+        "total_week_hours": f"{int(total_week_hours)}h {int((total_week_hours*60)%60)}m",
+        "week_days_present": week_records.filter(status="Present").count(),
+        "week_total_days": week_records.count(),
+    }
+
+    return render(request, "attendance.html", context)
+
+
+# ===============================
+# Leave
+# ===============================
+@login_required
+def leave_view(request):
+    employee = get_logged_in_employee(request)
+    if not employee:
+        messages.error(request, "You are not logged in as an employee.")
+        return redirect("accounts:login")
+
+    if request.method == "POST":
+        form = LeaveRequestForm(request.POST)
+        if form.is_valid():
+            leave_request = form.save(commit=False)
+            leave_request.employee = employee
+            leave_request.save()
+            messages.success(request, "Leave request submitted successfully!")
+            return redirect("employees:leave")
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = LeaveRequestForm()
+
+    leave_requests = LeaveRequest.objects.filter(employee=employee).order_by("-created_at")
+
+    balances = {
+        "Annual": 18 - sum(l.total_days() for l in leave_requests.filter(leave_type="Annual", status="Approved")),
+        "Sick": 8 - sum(l.total_days() for l in leave_requests.filter(leave_type="Sick", status="Approved")),
+        "Personal": 5 - sum(l.total_days() for l in leave_requests.filter(leave_type="Personal", status="Approved")),
+        "Maternity": 90 - sum(l.total_days() for l in leave_requests.filter(leave_type="Maternity", status="Approved")),
+        "Emergency": 5 - sum(l.total_days() for l in leave_requests.filter(leave_type="Emergency", status="Approved")),
+    }
+
+    context = {
+        "form": form,
+        "leave_requests": leave_requests,
+        "balances": balances,
+    }
+    return render(request, "leave.html", context)
+
+
+@login_required
+def apply_leave_view(request):
+    employee = get_logged_in_employee(request)
+    if not employee:
+        messages.error(request, "You are not logged in as an employee.")
+        return redirect("accounts:login")
+
+    if request.method == "POST":
+        form = LeaveRequestForm(request.POST)
+        if form.is_valid():
+            leave_request = form.save(commit=False)
+            leave_request.employee = employee
+            leave_request.save()
+            messages.success(request, "Leave request submitted successfully!")
+            return redirect("employees:leave")
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = LeaveRequestForm()
+
+    context = {"form": form}
+    return render(request, "apply_leave.html", context)
+
+
+# ===============================
+# Payroll
+# ===============================
+@login_required
+def payroll_view(request):
+    employee = get_logged_in_employee(request)
+    if not employee:
+        return redirect("accounts:login")
+
+    payrolls = Payroll.objects.filter(employee=employee).order_by('-month')
+    current_salary = payrolls.first() if payrolls.exists() else None
+    ytd_earnings = payrolls.aggregate(total_gross=Sum('gross_salary'))['total_gross'] or 0
+
+    context = {
+        'payrolls': payrolls,
+        'current_salary': current_salary,
+        'ytd_earnings': ytd_earnings,
+    }
+    return render(request, 'payroll.html', context)
+
+
+# ===============================
+# Performance
+# ===============================
+@login_required
+def performance_view(request):
+    employee = get_logged_in_employee(request)
+    if not employee:
+        return render(request, "performance.html", {"error": "Employee profile not found."})
+
+    performance = Performance.objects.filter(employee=employee).first()
+    skill_list = []
+
+    if performance:
+        skills = performance.skills.select_related("skill").all()
+        skill_list = [{"name": ps.skill.name, "value": ps.value, "color": ps.skill.color} for ps in skills]
+
+    feedbacks = performance.feedbacks.all() if performance else []
+
+    context = {
+        "employee": employee,
+        "performance": performance,
+        "skills": skill_list,
+        "feedbacks": feedbacks,
+    }
+    return render(request, "performance.html", context)
+
+
+# ===============================
+# Projects
+# ===============================
+@login_required
+def projects_view(request):
+    employee = get_logged_in_employee(request)
+    if not employee:
+        return redirect("accounts:login")
+
+    projects = Project.objects.filter(assigned_to=employee)
+
+    project_stats = [
+        {"label":"Active Projects","value":projects.filter(status="In Progress").count(),
+         "icon":"fas fa-tasks","icon_color":"text-blue-600","icon_bg":"bg-blue-100 dark:bg-blue-900"},
+        {"label":"Completed","value":projects.filter(status="Completed").count(),
+         "icon":"fas fa-check-circle","icon_color":"text-green-600","icon_bg":"bg-green-100 dark:bg-green-900"},
+        {"label":"Pending Review","value":projects.filter(status="Review").count(),
+         "icon":"fas fa-clock","icon_color":"text-yellow-600","icon_bg":"bg-yellow-100 dark:bg-yellow-900"},
+        {"label":"Success Rate","value":projects.aggregate_success_rate(),
+         "icon":"fas fa-percentage","icon_color":"text-purple-600","icon_bg":"bg-purple-100 dark:bg-purple-900"},
+    ]
+
+    context = {
+        "projects": projects,
+        "project_stats": project_stats,
+    }
+    return render(request, "projects.html", context)
+
+
+# ===============================
+# Other Pages
+# ===============================
+@login_required
+def documents(request):
+    return render(request, 'documents.html')
+
+
+@login_required
+def profile(request):
+    return render(request, 'profile.html')
+
+
+@login_required
+def support(request):
+    return render(request, 'support.html')
