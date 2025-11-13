@@ -1,117 +1,156 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Projects | Employee Portal</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config = { darkMode: 'class' }</script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-</head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Projects | Employee Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = { darkMode: "class" };
+    </script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+  </head>
+  <body
+    class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300"
+  >
+    <!-- Sidebar + Topbar -->
+    {% include "sideandtopbar.html" %}
 
-  <!-- Sidebar + Topbar -->
-  {% include "sideandtopbar.html" %}
-
-<div id="projects-page" class="p-6">
-
-  <!-- Page Header -->
-  <div class="mb-6">
-    <h1 class="text-3xl font-bold theme-text-primary">My Projects</h1>
-    <p class="theme-text-secondary">Track your assigned projects and tasks</p>
-  </div>
-
-  <!-- Project Stats -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-    {% for stat in project_stats %}
-    <div class="theme-bg-primary rounded-xl p-6 theme-border border text-center">
-      <div class="w-12 h-12 {{ stat.icon_bg }} rounded-lg flex items-center justify-center mx-auto mb-3">
-        <i class="{{ stat.icon }} {{ stat.icon_color }} text-xl"></i>
+    <div id="projects-page" class="p-6 md:ml-64 mt-16">
+      <!-- Page Header -->
+      <div class="mb-6">
+        <h1 class="text-3xl font-bold theme-text-primary">My Projects</h1>
+        <p class="theme-text-secondary">
+          Track your assigned projects and tasks
+        </p>
       </div>
-      <p class="text-2xl font-bold theme-text-primary">{{ stat.value }}</p>
-      <p class="text-sm theme-text-secondary">{{ stat.label }}</p>
-    </div>
-    {% endfor %}
-  </div>
 
-  <!-- Active Projects -->
-  <div class="space-y-6">
-    {% for project in projects %}
-    <div class="theme-bg-primary rounded-xl p-6 theme-border border">
-      <div class="flex items-center justify-between mb-4">
-        <div>
-          <h3 class="text-lg font-semibold theme-text-primary">{{ project.title }}</h3>
-          <p class="theme-text-secondary">{{ project.description }}</p>
+      <!-- Project Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {% for stat in project_stats %}
+        <div
+          class="theme-bg-primary rounded-xl p-6 theme-border border text-center"
+        >
+          <div
+            class="w-12 h-12 {{ stat.icon_bg }} rounded-lg flex items-center justify-center mx-auto mb-3"
+          >
+            <i class="{{ stat.icon }} {{ stat.icon_color }} text-xl"></i>
+          </div>
+          <p class="text-2xl font-bold theme-text-primary">{{ stat.value }}</p>
+          <p class="text-sm theme-text-secondary">{{ stat.label }}</p>
         </div>
-        <span class="status-badge {% if project.status == 'In Progress' %}bg-blue-100 text-blue-800{% elif project.status == 'Review' %}bg-yellow-100 text-yellow-800{% elif project.status == 'Planning' %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
-          {{ project.status }}
-        </span>
+        {% endfor %}
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <div>
-          <p class="text-sm theme-text-secondary">Progress</p>
-          <div class="flex items-center space-x-2 mt-1">
-            <div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-              <div class="progress-bar h-2 rounded-full" style="width: {{ project.progress }}%"></div>
+      <!-- Active Projects -->
+      <div class="space-y-6">
+        {% for project in projects %}
+        <div class="theme-bg-primary rounded-xl p-6 theme-border border">
+          <!-- Project Header -->
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-lg font-semibold theme-text-primary">
+                {{ project.title }}
+              </h3>
+              <p class="theme-text-secondary">{{ project.description }}</p>
             </div>
-            <span class="text-sm theme-text-primary">{{ project.progress }}%</span>
+            <span
+              class="status-badge {% if project.status == 'In Progress' %}bg-blue-100 text-blue-800 {% elif project.status == 'Review' %}bg-yellow-100 text-yellow-800 {% elif project.status == 'Planning' %}bg-green-100 text-green-800 {% elif project.status == 'Completed' %}bg-green-200 text-green-900 {% endif %}"
+              >{{ project.status }}</span
+            >
           </div>
-        </div>
-        <div>
-          <p class="text-sm theme-text-secondary">Due Date</p>
-          <p class="theme-text-primary font-medium">{{ project.due_date|date:"M d, Y" }}</p>
-        </div>
-        <div>
-          <p class="text-sm theme-text-secondary">Priority</p>
-          <span class="inline-block px-2 py-1 {% if project.priority == 'High' %}bg-red-100 text-red-800{% elif project.priority == 'Medium' %}bg-yellow-100 text-yellow-800{% else %}bg-green-100 text-green-800{% endif %} text-xs rounded-full">
-            {{ project.priority }}
-          </span>
-        </div>
-      </div>
 
-      <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-2">
-          <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-            <span class="text-white text-xs">{{ project.assigned_by_initials }}</span>
+          <!-- Project Details -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <p class="text-sm theme-text-secondary">Progress</p>
+              <div class="flex items-center space-x-2 mt-1">
+                <div
+                  class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2"
+                >
+                  <div
+                    class="progress-bar h-2 rounded-full"
+                    style="width: {{ project.progress }}%"
+                  ></div>
+                </div>
+                <span class="text-sm theme-text-primary"
+                  >{{ project.progress }}%</span
+                >
+              </div>
+            </div>
+            <div>
+              <p class="text-sm theme-text-secondary">Due Date</p>
+              <p class="theme-text-primary font-medium">
+                {{ project.due_date }}
+              </p>
+            </div>
+            <div>
+              <p class="text-sm theme-text-secondary">Priority</p>
+              <span
+                class="inline-block px-2 py-1 text-xs rounded-full {% if project.priority == 'High' %}bg-red-100 text-red-800 {% elif project.priority == 'Medium' %}bg-yellow-100 text-yellow-800 {% else %}bg-green-100 text-green-800{% endif %}"
+                >{{ project.priority }}</span
+              >
+            </div>
           </div>
-          <span class="text-sm theme-text-secondary">Assigned by {{ project.assigned_by }}</span>
+
+          <!-- Assigned By & Action -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <div
+                class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center"
+              >
+                <span class="text-white text-xs"
+                  >{{ project.assigned_by|slice:":2"|upper }}</span
+                >
+              </div>
+              <span class="text-sm theme-text-secondary"
+                >Assigned by {{ project.assigned_by }}</span
+              >
+            </div>
+            <a
+              href="{% url 'employees:project_detail' project.id %}"
+              class="text-blue-600 hover:text-blue-800 text-sm"
+            >
+              View Details
+            </a>
+          </div>
         </div>
-        <button class="text-blue-600 hover:text-blue-800 text-sm">View Details</button>
+        {% endfor %}
       </div>
     </div>
-    {% endfor %}
-  </div>
 
-</div>
-
-<!-- JS for progress bar animation & toggles -->
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    document.querySelectorAll(".progress-bar").forEach(bar => {
-        const width = bar.style.width;
-        bar.style.width = "0";
-        setTimeout(() => {
+    <!-- JS for progress bar animation & toggles -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // Animate progress bars
+        document.querySelectorAll(".progress-bar").forEach((bar) => {
+          const width = bar.style.width;
+          bar.style.width = "0";
+          setTimeout(() => {
             bar.style.transition = "width 1s ease-in-out";
             bar.style.width = width;
-        }, 100);
-    });
+          }, 100);
+        });
 
-    const sidebarToggle = document.getElementById("sidebar-toggle");
-    if(sidebarToggle){
-        sidebarToggle.addEventListener("click", () => {
+        // Sidebar toggle
+        const sidebarToggle = document.getElementById("sidebar-toggle");
+        if (sidebarToggle) {
+          sidebarToggle.addEventListener("click", () => {
             document.getElementById("sidebar").classList.toggle("hidden");
-        });
-    }
+          });
+        }
 
-    const themeToggle = document.getElementById("theme-toggle");
-    if(themeToggle){
-        themeToggle.addEventListener("click", () => {
+        // Dark/light toggle
+        const themeToggle = document.getElementById("theme-toggle");
+        if (themeToggle) {
+          themeToggle.addEventListener("click", () => {
             document.documentElement.classList.toggle("dark");
-        });
-    }
-});
-</script>
-
-</body>
+          });
+        }
+      });
+    </script>
+  </body>
 </html>

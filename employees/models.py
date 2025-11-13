@@ -177,3 +177,81 @@ class Project(models.Model):
         if not projects.exists():
             return 0
         return round(sum([p.progress for p in projects])/projects.count())
+
+
+# ===============================
+# Document Model
+# ===============================
+
+# employees/models.py
+from django.db import models
+from accounts.models import EmployeeProfile
+
+CATEGORY_CHOICES = [
+    ("Personal", "Personal"),
+    ("Payroll", "Payroll"),
+    ("Company Policies", "Company Policies"),
+    ("Certificates", "Certificates"),
+    ("Forms", "Forms"),
+    ("IT", "IT"),
+]
+
+class Document(models.Model):
+    employee = models.ForeignKey(EmployeeProfile, on_delete=models.CASCADE)
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
+    title = models.CharField(max_length=255)
+    file = models.FileField(upload_to="documents/")
+    view_only = models.BooleanField(default=False)  # True = view, False = download
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.employee} - {self.title}"
+
+
+# ===============================
+# Profile Model Extension (if needed)
+# ===============================
+
+# employees/models.py
+from django.db import models
+from accounts.models import EmployeeProfile
+from datetime import date
+
+class EmployeeData(models.Model):
+    """
+    Extended employee profile information.
+    Linked OneToOne with EmployeeProfile.
+    """
+    employee = models.OneToOneField(
+        EmployeeProfile,
+        on_delete=models.CASCADE,
+        related_name="profile"
+    )
+    
+    # Extended profile info
+    designation = models.CharField(max_length=100, blank=True, null=True)
+    department = models.CharField(max_length=100, blank=True, null=True)
+    joining_date = models.DateField(blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    avatar = models.ImageField(upload_to="employee_avatars/", blank=True, null=True)
+    
+    # Optional info
+    emergency_contact = models.CharField(max_length=20, blank=True, null=True)
+    role = models.CharField(max_length=50, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.employee.full_name} ({self.employee.employee_id})"
+
+    # employees/models.py
+def initials(self):
+    return "".join([n[0].upper() for n in (self.employee.full_name or "").split()][:2])
+
+
+    def tenure_years(self):
+        """Calculate years since joining."""
+        if self.joining_date:
+            today = date.today()
+            return today.year - self.joining_date.year - (
+                (today.month, today.day) < (self.joining_date.month, self.joining_date.day)
+            )
+        return 0

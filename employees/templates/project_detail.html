@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ project.title }} | Project Details</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4f46e5',
+            secondary: '#6366f1',
+          },
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-500">
+
+  <!-- Topbar -->
+  <header class="fixed top-0 left-0 w-full bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between z-50 transition-colors duration-300">
+    <!-- Left: Logo/Title -->
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center">
+        <i class="fas fa-user-tie text-white"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold">Managely</h1>
+        <p class="text-xs text-gray-500 dark:text-gray-300">Employee Portal</p>
+      </div>
+    </div>
+
+    <!-- Right: Profile + Toggle -->
+    <div class="flex items-center space-x-4">
+      <span class="font-semibold">{{ employee.full_name }}</span>
+      <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+        <i class="fas fa-moon text-gray-700 dark:text-gray-200"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main class="max-w-4xl mx-auto p-6 pt-24 space-y-6">
+
+    <!-- Back Button -->
+    <div>
+      <a href="{% url 'employees:projects' %}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg shadow hover:bg-secondary transition">
+        <i class="fas fa-arrow-left mr-2"></i> Back to Projects
+      </a>
+    </div>
+
+    <!-- Project Card -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-6 animate-fadeIn transition duration-500">
+      <h2 class="text-3xl font-bold mb-2 text-gray-900 dark:text-white">{{ project.title }}</h2>
+      <p class="text-gray-600 dark:text-gray-300 mb-4">{{ project.description }}</p>
+
+      <!-- Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+        <!-- Progress -->
+        <div>
+          <p class="text-sm text-gray-500 mb-1">Progress</p>
+          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+            <div class="bg-primary h-3 rounded-full transition-all duration-1000 ease-in-out" style="width: {{ project.progress }}%"></div>
+          </div>
+          <p class="mt-1 font-medium">{{ project.progress }}%</p>
+        </div>
+
+        <!-- Due Date -->
+        <div>
+          <p class="text-sm text-gray-500 mb-1">Due Date</p>
+          <p class="font-medium">{{ project.due_date }}</p>
+        </div>
+
+        <!-- Priority -->
+        <div>
+          <p class="text-sm text-gray-500 mb-1">Priority</p>
+          <span class="px-3 py-1 rounded-full font-semibold
+            {% if project.priority == 'High' %}bg-red-200 text-red-800
+            {% elif project.priority == 'Medium' %}bg-yellow-200 text-yellow-800
+            {% else %}bg-green-200 text-green-800{% endif %}">
+            {{ project.priority }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Assigned By -->
+      <div class="mt-4 flex items-center space-x-3">
+        <span class="px-3 py-1 bg-green-500 text-white font-semibold rounded-full">{{ assigned_by_initials }}</span>
+        <p class="text-gray-500 dark:text-gray-400">Assigned by {{ project.assigned_by }}</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Tailwind Animations -->
+  <style>
+    .animate-fadeIn {
+      opacity: 0;
+      animation: fadeIn 0.7s forwards;
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+  </style>
+
+  <!-- Dark/Light Toggle Script -->
+  <script>
+    const themeToggle = document.getElementById("theme-toggle");
+    themeToggle.addEventListener("click", () => {
+      document.documentElement.classList.toggle("dark");
+    });
+  </script>
+
+</body>
+</html>

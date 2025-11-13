@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ employee.full_name }} | Profile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1e40af',       // Dark Blue
+            secondary: '#2563eb',     // Lighter Blue
+            accent: '#3b82f6',        // Highlight
+          },
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-500">
+
+  <!-- Include your sidebar & topbar -->
+  {% include 'sideandtopbar.html' %}
+
+  <div class="max-w-5xl mx-auto p-6 mt-20 space-y-6">
+
+    <!-- Profile Card -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-6 animate-fadeIn transition duration-500">
+      <div class="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">
+        
+        <!-- Avatar -->
+        <div class="flex-shrink-0">
+          {% if profile.avatar %}
+          <img src="{{ profile.avatar.url }}" alt="Avatar" class="w-32 h-32 rounded-full object-cover border-4 border-primary">
+          {% else %}
+          <div class="w-32 h-32 rounded-full bg-primary flex items-center justify-center text-white text-4xl font-bold">
+            {{ profile.initials }}
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Info -->
+        <div class="flex-1 space-y-2">
+          <h2 class="text-3xl font-bold">{{ employee.full_name }}</h2>
+          <p class="text-gray-500 dark:text-gray-300">{{ profile.role|default:"Employee" }}</p>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 text-gray-700 dark:text-gray-300">
+            <div><span class="font-semibold">Employee ID:</span> {{ employee.employee_id }}</div>
+            <div><span class="font-semibold">Phone:</span> {{ employee.phone }}</div>
+            <div><span class="font-semibold">Department:</span> {{ profile.department|default:"-" }}</div>
+            <div><span class="font-semibold">Designation:</span> {{ profile.designation|default:"-" }}</div>
+            <div><span class="font-semibold">Joining Date:</span> {{ profile.joining_date|date:"d M Y"|default:"-" }}</div>
+            <div><span class="font-semibold">Emergency Contact:</span> {{ profile.emergency_contact|default:"-" }}</div>
+            <div><span class="font-semibold">Tenure:</span> {{ profile.tenure_years }} year(s)</div>
+            <div><span class="font-semibold">Address:</span> {{ profile.address|default:"-" }}</div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="mt-6 flex flex-wrap gap-4">
+            <a href="{% url 'employees:edit_profile' %}" class="px-4 py-2 bg-primary text-white rounded-lg shadow hover:bg-secondary transition">
+              <i class="fas fa-edit mr-2"></i> Edit Profile
+            </a>
+            <a href="{% url 'employees:dashboard' %}" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+              <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Fade-in Animation -->
+  <style>
+    .animate-fadeIn { opacity: 0; animation: fadeIn 0.7s forwards; }
+    @keyframes fadeIn { to { opacity: 1; } }
+  </style>
+
+  <!-- Dark/Light Toggle Script -->
+  <script>
+    const themeToggle = document.getElementById("theme-toggle");
+    if(themeToggle){
+      themeToggle.addEventListener("click", () => {
+        document.documentElement.classList.toggle("dark");
+      });
+    }
+  </script>
+
+</body>
+</html>

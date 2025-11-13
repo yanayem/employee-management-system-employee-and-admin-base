@@ -88,3 +88,40 @@ class ProjectAdmin(admin.ModelAdmin):
     list_display = ("title", "assigned_to", "due_date", "status", "priority", "progress")
     search_fields = ("title", "assigned_to__employee_id", "assigned_to__phone", "assigned_by")
     list_filter = ("status", "priority", "due_date")
+
+
+# ===============================
+# Document Model Admin
+# ===============================
+
+# employees/admin.py
+from django.contrib import admin
+from .models import Document
+
+@admin.register(Document)
+class DocumentAdmin(admin.ModelAdmin):
+    list_display = ("title", "employee", "category", "view_only", "uploaded_at")
+    list_filter = ("category", "view_only", "uploaded_at")
+    search_fields = ("title", "employee__employee_id", "employee__name")
+
+
+# ===============================
+# Profile Model Admin
+# ===============================
+
+# employees/admin.py
+from django.contrib import admin
+from .models import EmployeeData
+
+@admin.register(EmployeeData)
+class EmployeeDataAdmin(admin.ModelAdmin):
+    list_display = ("employee", "designation", "department", "role", "joining_date")
+    search_fields = (
+        "employee__employee_id",
+        "employee__phone",
+        "designation",
+        "department",
+        "role"
+    )
+    list_filter = ("department", "role", "joining_date")
+    readonly_fields = ("employee",)

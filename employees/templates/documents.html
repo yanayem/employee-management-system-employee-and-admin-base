@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documents | Employee Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-500">
+
+  <!-- Include Sidebar and Topbar -->
+  {% include "sideandtopbar.html" %}
+
+  <div class="max-w-7xl mx-auto p-6 space-y-6 md:ml-64 mt-16">
+    <div class="mb-6">
+      <h1 class="text-3xl font-bold text-blue-600 dark:text-blue-400">Documents</h1>
+      <p class="text-gray-600 dark:text-gray-300">Access your employment documents and company policies</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for category, docs in categories.items %}
+      <div class="bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-6 transition-colors duration-300">
+        <div class="flex items-center mb-4">
+          <div class="w-12 h-12 rounded-lg flex items-center justify-center mr-4
+            {% if category == 'Personal' %} bg-blue-100 dark:bg-blue-900 text-blue-600
+            {% elif category == 'Payroll' %} bg-green-100 dark:bg-green-900 text-green-600
+            {% elif category == 'Company Policies' %} bg-purple-100 dark:bg-purple-900 text-purple-600
+            {% elif category == 'Certificates' %} bg-yellow-100 dark:bg-yellow-900 text-yellow-600
+            {% elif category == 'Forms' %} bg-orange-100 dark:bg-orange-900 text-orange-600
+            {% elif category == 'IT' %} bg-indigo-100 dark:bg-indigo-900 text-indigo-600
+            {% endif %}">
+            <i class="fas fa-file-pdf text-xl"></i>
+          </div>
+          <h3 class="text-lg font-semibold">{{ category }}</h3>
+        </div>
+
+        <div class="space-y-3">
+          {% for doc in docs %}
+          <div class="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-700 rounded-lg transition-colors duration-200">
+            <div class="flex items-center space-x-3">
+              <i class="fas fa-file-pdf text-red-600"></i>
+              <span class="text-sm">{{ doc.title }}</span>
+            </div>
+            {% if doc.view_only %}
+            <a href="{{ doc.file.url }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">
+              <i class="fas fa-eye"></i>
+            </a>
+            {% else %}
+            <a href="{{ doc.file.url }}" download class="text-blue-600 hover:text-blue-800 text-sm">
+              <i class="fas fa-download"></i>
+            </a>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Dark/Light Toggle Script -->
+  <script>
+    const themeToggle = document.getElementById("theme-toggle");
+    if(themeToggle){
+      themeToggle.addEventListener("click", () => {
+        document.documentElement.classList.toggle("dark");
+      });
+    }
+  </script>
+</body>
+</html>

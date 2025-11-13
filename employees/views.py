@@ -210,42 +210,193 @@ def performance_view(request):
 # ===============================
 @login_required
 def projects_view(request):
+    # Get the logged-in employee
     employee = get_logged_in_employee(request)
     if not employee:
         return redirect("accounts:login")
 
-    projects = Project.objects.filter(assigned_to=employee)
+    # Fetch projects assigned to this employee
+    employee_projects = Project.objects.filter(assigned_to=employee)
 
+    # Calculate employee-specific success rate
+    if employee_projects.exists():
+        success_rate = round(sum(p.progress for p in employee_projects) / employee_projects.count())
+    else:
+        success_rate = 0
+
+    # Prepare project stats
     project_stats = [
-        {"label":"Active Projects","value":projects.filter(status="In Progress").count(),
-         "icon":"fas fa-tasks","icon_color":"text-blue-600","icon_bg":"bg-blue-100 dark:bg-blue-900"},
-        {"label":"Completed","value":projects.filter(status="Completed").count(),
-         "icon":"fas fa-check-circle","icon_color":"text-green-600","icon_bg":"bg-green-100 dark:bg-green-900"},
-        {"label":"Pending Review","value":projects.filter(status="Review").count(),
-         "icon":"fas fa-clock","icon_color":"text-yellow-600","icon_bg":"bg-yellow-100 dark:bg-yellow-900"},
-        {"label":"Success Rate","value":projects.aggregate_success_rate(),
-         "icon":"fas fa-percentage","icon_color":"text-purple-600","icon_bg":"bg-purple-100 dark:bg-purple-900"},
+        {
+            "label": "Active Projects",
+            "value": employee_projects.filter(status="In Progress").count(),
+            "icon": "fas fa-tasks",
+            "icon_color": "text-blue-600",
+            "icon_bg": "bg-blue-100 dark:bg-blue-900"
+        },
+        {
+            "label": "Completed",
+            "value": employee_projects.filter(status="Completed").count(),
+            "icon": "fas fa-check-circle",
+            "icon_color": "text-green-600",
+            "icon_bg": "bg-green-100 dark:bg-green-900"
+        },
+        {
+            "label": "Pending Review",
+            "value": employee_projects.filter(status="Review").count(),
+            "icon": "fas fa-clock",
+            "icon_color": "text-yellow-600",
+            "icon_bg": "bg-yellow-100 dark:bg-yellow-900"
+        },
+        {
+            "label": "Success Rate",
+            "value": success_rate,
+            "icon": "fas fa-percentage",
+            "icon_color": "text-purple-600",
+            "icon_bg": "bg-purple-100 dark:bg-purple-900"
+        },
     ]
 
     context = {
-        "projects": projects,
+        "projects": employee_projects,
         "project_stats": project_stats,
     }
+
     return render(request, "projects.html", context)
 
+#--------------------------------
+# Project Detail View
+#--------------------------------
+
+@login_required
+def project_detail_view(request, pk):
+    employee = get_logged_in_employee(request)
+    if not employee:
+        return redirect("accounts:login")
+
+    try:
+        project = Project.objects.get(pk=pk, assigned_to=employee)
+    except Project.DoesNotExist:
+        return redirect("employees:projects")  # redirect if project not found
+
+    context = {
+        "project": project,
+        "assigned_by_initials": "".join([n[0] for n in project.assigned_by.split()][:2]).upper()
+    }
+
+    return render(request, "project_detail.html", context)
 
 # ===============================
 # Other Pages
 # ===============================
+# employees/views.py
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from accounts.models import EmployeeProfile
+from .models import Document  # Assuming you have a Document model
+
+def get_logged_in_employee(request):
+    """
+    Retrieve the currently logged-in employee using session.
+    Returns None if not found.
+    """
+    employee_id = request.session.get('employee_id')
+    if not employee_id:
+        return None
+    try:
+        return EmployeeProfile.objects.get(employee_id=employee_id)
+    except EmployeeProfile.DoesNotExist:
+        return None
+
 @login_required
-def documents(request):
-    return render(request, 'documents.html')
+def documents_view(request):
+    """
+    Display documents page for the logged-in employee.
+    """
+    employee = get_logged_in_employee(request)
+    if not employee:
+        return redirect('accounts:login')
+
+    # Fetch documents by category
+    # Assuming Document model has fields: category, title, file, view_only (bool)
+    personal_docs = Document.objects.filter(employee=employee, category='Personal')
+    payroll_docs = Document.objects.filter(employee=employee, category='Payroll')
+    company_policies = Document.objects.filter(employee=employee, category='Company Policies')
+    certificates = Document.objects.filter(employee=employee, category='Certificates')
+    forms = Document.objects.filter(employee=employee, category='Forms')
+    it_docs = Document.objects.filter(employee=employee, category='IT')
+
+    context = {
+        'personal_docs': personal_docs,
+        'payroll_docs': payroll_docs,
+        'company_policies': company_policies,
+        'certificates': certificates,
+        'forms': forms,
+        'it_docs': it_docs,
+        'employee': employee,
+    }
+
+    return render(request, 'documents.html', context)
+
+#===============================
+# Profile View
+#===============================
+
+# employees/views.py
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from accounts.models import EmployeeProfile
+from .models import EmployeeData
 
 
 @login_required
-def profile(request):
-    return render(request, 'profile.html')
+def profile_view(request):
+    """
+    Display employee profile and allow editing of EmployeeData.
+    """
+    employee = get_logged_in_employee(request)
+    if not employee:
+        return redirect("accounts:login")
 
+    # Try to fetch EmployeeData or create blank if not exist
+    profile, created = EmployeeData.objects.get_or_create(employee=employee)
+
+    context = {
+        "employee": employee,
+        "profile": profile,
+    }
+
+    return render(request, "profile.html", context)
+
+#===============================
+#Edit Profile View
+#===============================
+
+@login_required
+def edit_profile(request):
+    employee = get_logged_in_employee(request)
+    if not employee:
+        return redirect('accounts:login')
+
+    # Get or create EmployeeData
+    profile, _ = EmployeeData.objects.get_or_create(employee=employee)
+
+    if request.method == "POST":
+        # update fields
+        profile.full_name = request.POST.get("full_name", profile.full_name)
+        profile.designation = request.POST.get("designation", profile.designation)
+        profile.department = request.POST.get("department", profile.department)
+        profile.joining_date = request.POST.get("joining_date", profile.joining_date)
+        profile.address = request.POST.get("address", profile.address)
+        profile.emergency_contact = request.POST.get("emergency_contact", profile.emergency_contact)
+        profile.role = request.POST.get("role", profile.role)
+        if request.FILES.get("avatar"):
+            profile.avatar = request.FILES["avatar"]
+        profile.save()
+        messages.success(request, "Profile updated successfully!")
+        return redirect("employees:profile")
+
+    context = {"profile": profile, "employee": employee}
+    return render(request, "edit_profile.html", context)
 
 @login_required
 def support(request):
