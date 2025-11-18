@@ -1,0 +1,159 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <title>{% if project %}Edit Project{% else %}Add Project{% endif %}</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    <script>
+      tailwind.config = { darkMode: "class" };
+    </script>
+</head>
+
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300 font-sans">
+
+<!-- Top Bar -->
+<header class="fixed top-0 w-full z-50 bg-white dark:bg-gray-800 shadow p-4 flex justify-between items-center">
+    <div class="flex items-center space-x-3">
+        <img src="{% static 'images/logo.png' %}" alt="Logo" class="h-8 w-auto">
+        <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100">HR Admin Panel</h1>
+    </div>
+
+    <button id="theme-toggle"
+        class="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 
+               hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+        Toggle Dark/Light
+    </button>
+</header>
+
+<main class="pt-20 max-w-3xl mx-auto p-6">
+
+    <a href="{% url 'admin_project_list' %}"
+       class="inline-block mb-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 
+              text-gray-800 dark:text-gray-200 rounded hover:bg-gray-300 
+              dark:hover:bg-gray-600 transition">
+        &larr; Back
+    </a>
+
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg transition-transform transform hover:-translate-y-1">
+
+        <h2 class="text-2xl font-bold mb-6">
+            {% if project %}Edit Project{% else %}Add Project{% endif %}
+        </h2>
+
+        <form method="POST" class="space-y-4">
+            {% csrf_token %}
+
+            <!-- Title -->
+            <div>
+                <label class="block mb-1 font-medium">Title</label>
+                <input type="text" name="title"
+                       value="{% if project %}{{ project.title }}{% endif %}"
+                       class="w-full p-2 rounded border border-gray-300 dark:border-gray-600
+                              bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 
+                              focus:ring-2 focus:ring-blue-400 transition">
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label class="block mb-1 font-medium">Description</label>
+                <textarea name="description"
+                    class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 
+                           bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 
+                           focus:ring-2 focus:ring-blue-400 transition">{% if project %}{{ project.description }}{% endif %}</textarea>
+            </div>
+
+            <!-- Assign to -->
+            <div>
+                <label class="block mb-1 font-medium">Assign to</label>
+                <select name="assigned_to"
+                    class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 
+                           bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 
+                           focus:ring-2 focus:ring-blue-400 transition">
+                    {% for emp in employees %}
+                        <option value="{{ emp.id }}"
+                            {% if project and project.assigned_to.id == emp.id %}selected{% endif %}>
+                            {{ emp.full_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Progress + Due Date -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block mb-1 font-medium">Progress</label>
+                    <input type="number" name="progress" min="0" max="100"
+                        value="{% if project %}{{ project.progress }}{% endif %}"
+                        class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 
+                               bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 
+                               focus:ring-2 focus:ring-blue-400 transition">
+                </div>
+
+                <div>
+                    <label class="block mb-1 font-medium">Due Date</label>
+                    <input type="date" name="due_date"
+                        value="{% if project %}{{ project.due_date }}{% endif %}"
+                        class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 
+                               bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 
+                               focus:ring-2 focus:ring-blue-400 transition">
+                </div>
+            </div>
+
+            <!-- Priority + Status -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block mb-1 font-medium">Priority</label>
+                    <select name="priority"
+                        class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 
+                               bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 
+                               focus:ring-2 focus:ring-blue-400 transition">
+                        <option value="Low" {% if project and project.priority == "Low" %}selected{% endif %}>Low</option>
+                        <option value="Medium" {% if project and project.priority == "Medium" %}selected{% endif %}>Medium</option>
+                        <option value="High" {% if project and project.priority == "High" %}selected{% endif %}>High</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block mb-1 font-medium">Status</label>
+                    <select name="status"
+                        class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 
+                               bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 
+                               focus:ring-2 focus:ring-blue-400 transition">
+                        <option value="Planning" {% if project and project.status == "Planning" %}selected{% endif %}>Planning</option>
+                        <option value="In Progress" {% if project and project.status == "In Progress" %}selected{% endif %}>In Progress</option>
+                        <option value="Review" {% if project and project.status == "Review" %}selected{% endif %}>Review</option>
+                        <option value="Completed" {% if project and project.status == "Completed" %}selected{% endif %}>Completed</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex items-center space-x-4 mt-4">
+                <button type="submit"
+                    class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded transition">
+                    Save
+                </button>
+
+                <a href="{% url 'admin_project_list' %}"
+                   class="px-6 py-2 rounded border border-gray-300 dark:border-gray-600 
+                          hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                    Cancel
+                </a>
+            </div>
+
+        </form>
+    </div>
+</main>
+
+<script>
+    // Dark/Light toggle
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark');
+    });
+</script>
+
+</body>
+</html>

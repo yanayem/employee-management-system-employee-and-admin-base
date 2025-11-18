@@ -1,0 +1,129 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8">
+  <title>Employee List</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+  <script>
+      // Enable Tailwind class-based dark mode
+      tailwind.config = { darkMode: "class" };
+  </script>
+</head>
+<body class="bg-gray-100 dark:bg-blue-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
+
+{% include 'adminsidetopbar.html' %}
+
+<!-- Theme Toggle -->
+<div class="fixed top-20 right-6 z-50">
+  <button id="theme-toggle" class="bg-gray-200 dark:bg-blue-700 p-2 rounded-full shadow">
+    <i id="theme-icon" class="fas fa-moon text-gray-800 dark:text-white"></i>
+  </button>
+</div>
+
+<div class="ml-64 mt-16 p-6">
+    <h2 class="text-3xl font-bold mb-6">Employees</h2>
+
+    <!-- Add New Employee Button -->
+    <div class="mb-6">
+        <a href="{% url 'admin_employee_add' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition">
+            <i class="fas fa-plus-circle"></i> Add New Employee
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <form method="GET" class="flex flex-col md:flex-row md:items-center md:space-x-4 mb-6">
+        <input type="text" name="q" placeholder="Search by name, ID, or phone"
+               value="{{ request.GET.q|default:'' }}"
+               class="w-full md:w-1/2 p-3 rounded-lg border dark:bg-blue-700 dark:border-blue-600 text-gray-800 dark:text-gray-100 mb-2 md:mb-0">
+
+        <select name="department" class="w-full md:w-1/4 p-3 rounded-lg border dark:bg-blue-700 dark:border-blue-600 text-gray-800 dark:text-gray-100">
+            <option value="">All Departments</option>
+            {% for dept in departments %}
+                <option value="{{ dept }}" {% if request.GET.department == dept %}selected{% endif %}>{{ dept }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition mt-2 md:mt-0">
+            Filter
+        </button>
+    </form>
+
+    <!-- Employee Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {% for emp in employees %}
+        <div class="relative bg-white dark:bg-blue-800 rounded-xl shadow p-6 flex flex-col items-center transition hover:scale-105">
+
+            <!-- Avatar -->
+            {% if emp.avatar %}
+            <div class="w-20 h-20 rounded-full overflow-hidden mb-3">
+                <img src="{{ emp.avatar.url }}" class="w-full h-full object-cover">
+            </div>
+            {% else %}
+            <div class="w-20 h-20 rounded-full flex items-center justify-center mb-3
+                        {% if emp.department == 'HR' %}bg-red-500
+                        {% elif emp.department == 'IT' %}bg-green-500
+                        {% elif emp.department == 'Finance' %}bg-yellow-500
+                        {% elif emp.department == 'Marketing' %}bg-purple-500
+                        {% else %}bg-gray-400{% endif %}">
+                <span class="text-white text-xl font-bold">{{ emp.full_name|slice:":1" }}</span>
+            </div>
+            {% endif %}
+
+            <!-- Employee Info -->
+            <h3 class="font-semibold text-lg text-gray-800 dark:text-gray-100">{{ emp.full_name }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-300">{{ emp.employee_id }}</p>
+            <p class="text-sm mt-1 text-gray-500 dark:text-gray-300">{{ emp.department }}</p>
+            <p class="text-sm mt-1 text-gray-500 dark:text-gray-300">{{ emp.phone }}</p>
+
+            <!-- Actions: View, Edit, Activate/Deactivate -->
+            <div class="mt-3 w-full flex justify-center space-x-3">
+                <!-- View -->
+                <a href="{% url 'admin_employee_view' emp.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition">
+                    <i class="fas fa-eye"></i> View
+                </a>
+
+                <!-- Edit -->
+                <a href="{% url 'admin_employee_edit' emp.id %}" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-medium transition">
+                    <i class="fas fa-edit"></i> Edit
+                </a>
+
+                <!-- Activate/Deactivate -->
+                {% if emp.is_active %}
+                    <a href="{% url 'admin_employee_deactivate' emp.id %}" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition">
+                        <i class="fas fa-user-slash"></i> Deactivate
+                    </a>
+                {% else %}
+                    <a href="{% url 'admin_employee_activate' emp.id %}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition">
+                        <i class="fas fa-check-circle"></i> Activate
+                    </a>
+                {% endif %}
+            </div>
+
+        </div>
+        {% empty %}
+        <p class="text-gray-600 dark:text-gray-300 col-span-full">No employees found.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Theme Toggle Script -->
+<script>
+  const themeBtn = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+
+  themeBtn.addEventListener('click', () => {
+    document.documentElement.classList.toggle('dark');
+    if (document.documentElement.classList.contains('dark')) {
+      themeIcon.classList.remove('fa-moon');
+      themeIcon.classList.add('fa-sun');
+    } else {
+      themeIcon.classList.remove('fa-sun');
+      themeIcon.classList.add('fa-moon');
+    }
+  });
+</script>
+
+</body>
+</html>

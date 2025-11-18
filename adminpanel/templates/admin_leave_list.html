@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Leave Management</title>
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+      // Enable Tailwind class-based dark mode
+      tailwind.config = { darkMode: "class" };
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
+
+{% include 'adminsidetopbar.html' %}
+
+<div class="ml-64 mt-16 p-6">
+    <h2 class="text-3xl font-bold mb-6">Leave Requests</h2>
+
+    <div class="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl shadow p-4">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead class="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-200">Employee</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-200">Leave Type</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-200">Dates</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-200">Days</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-200">Reason</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-200">Status</th>
+                    <th class="px-4 py-2 text-center text-sm font-medium text-gray-700 dark:text-gray-200">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                {% for leave in leave_requests %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                    <td class="px-4 py-2">{{ leave.employee.full_name }}</td>
+                    <td class="px-4 py-2">{{ leave.leave_type }}</td>
+                    <td class="px-4 py-2">{{ leave.start_date }} → {{ leave.end_date }}</td>
+                    <td class="px-4 py-2">{{ leave.number_of_days }}</td>
+                    <td class="px-4 py-2">{{ leave.reason|truncatechars:50 }}</td>
+                    <td class="px-4 py-2">
+                        {% if leave.status == "Approved" %}
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold">{{ leave.status }}</span>
+                        {% elif leave.status == "Rejected" %}
+                            <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold">{{ leave.status }}</span>
+                        {% else %}
+                            <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold">{{ leave.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-2 text-center space-x-2">
+                        {% if leave.status == "Pending" %}
+                        <a href="{% url 'admin_leave_update' leave.id 'approve' %}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm">Approve</a>
+                        <a href="{% url 'admin_leave_update' leave.id 'reject' %}" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm">Reject</a>
+                        {% else %}
+                        <span class="text-gray-500 text-sm">No actions</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-gray-500 dark:text-gray-300">No leave requests found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,89 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <title>Departments</title>
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // Enable Tailwind class-based dark mode
+      tailwind.config = { darkMode: "class" };
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-blue-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
+
+{% include 'adminsidetopbar.html' %}
+
+<div class="ml-64 mt-16 p-6">
+    <h2 class="text-3xl font-bold mb-6">Departments</h2>
+
+    <!-- Theme Toggle -->
+    <div class="fixed top-20 right-6 z-50">
+      <button id="theme-toggle" class="bg-gray-200 dark:bg-blue-700 p-2 rounded-full shadow">
+        <i id="theme-icon" class="fas fa-moon text-gray-800 dark:text-white"></i>
+      </button>
+    </div>
+
+    <!-- Add Department -->
+    <form id="add-department-form" class="flex mb-6 space-x-4">
+        <input type="text" id="department-name" placeholder="New Department"
+               class="w-1/3 p-3 rounded-lg border dark:bg-blue-700 dark:border-blue-600 text-gray-800 dark:text-gray-100">
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Add</button>
+    </form>
+
+    <!-- Department List -->
+    <div id="department-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <!-- Example departments -->
+        <div class="bg-white dark:bg-blue-800 rounded-xl shadow p-6 flex justify-between items-center">
+            <span>HR</span>
+            <button class="text-red-500 hover:underline remove-btn">Delete</button>
+        </div>
+        <div class="bg-white dark:bg-blue-800 rounded-xl shadow p-6 flex justify-between items-center">
+            <span>IT</span>
+            <button class="text-red-500 hover:underline remove-btn">Delete</button>
+        </div>
+        <div class="bg-white dark:bg-blue-800 rounded-xl shadow p-6 flex justify-between items-center">
+            <span>Finance</span>
+            <button class="text-red-500 hover:underline remove-btn">Delete</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const themeBtn = document.getElementById('theme-toggle');
+const themeIcon = document.getElementById('theme-icon');
+const addForm = document.getElementById('add-department-form');
+const deptList = document.getElementById('department-list');
+
+// Theme toggle
+themeBtn.addEventListener('click', () => {
+    document.documentElement.classList.toggle('dark');
+    themeIcon.classList.toggle('fa-moon');
+    themeIcon.classList.toggle('fa-sun');
+});
+
+// Add department dynamically
+addForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = document.getElementById('department-name');
+    const name = input.value.trim();
+    if(name) {
+        const div = document.createElement('div');
+        div.className = "bg-white dark:bg-blue-800 rounded-xl shadow p-6 flex justify-between items-center";
+        div.innerHTML = `<span>${name}</span> <button class="text-red-500 hover:underline remove-btn">Delete</button>`;
+        deptList.appendChild(div);
+        input.value = "";
+    }
+});
+
+// Delete department dynamically
+deptList.addEventListener('click', (e) => {
+    if(e.target.classList.contains('remove-btn')) {
+        e.target.parentElement.remove();
+    }
+});
+</script>
+
+</body>
+</html>

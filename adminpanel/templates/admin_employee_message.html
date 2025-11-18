@@ -1,0 +1,62 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8">
+  <title>Send Mail - {{ employee.full_name }}</title>
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+      // Enable Tailwind class-based dark mode
+      tailwind.config = { darkMode: "class" };
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-blue-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+
+{% include 'adminsidetopbar.html' %}
+
+<div class="ml-64 mt-16 p-6 max-w-lg">
+
+    <h2 class="text-3xl font-bold mb-6">Send Mail to {{ employee.full_name }}</h2>
+
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="p-3 rounded-lg {% if message.tags == 'error' %}bg-red-200 text-red-800{% else %}bg-green-200 text-green-800{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="POST" class="bg-white dark:bg-blue-800 p-6 rounded-xl shadow-lg">
+        {% csrf_token %}
+
+        <label class="block mb-4">
+            <span class="font-semibold">Subject</span>
+            <input type="text" name="subject" placeholder="Enter subject" required
+                   class="w-full p-3 mt-1 rounded-lg border dark:bg-blue-700 dark:border-blue-600">
+        </label>
+
+        <label class="block mb-4">
+            <span class="font-semibold">Message</span>
+            <textarea name="message" rows="6" placeholder="Write your message here..." required
+                      class="w-full p-3 mt-1 rounded-lg border dark:bg-blue-700 dark:border-blue-600"></textarea>
+        </label>
+
+        <div class="flex items-center space-x-4">
+            <button type="submit"
+                    class="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition">
+                Send Mail
+            </button>
+
+            <a href="{% url 'admin_employee_list' %}"
+               class="text-blue-500 hover:underline font-medium">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+</body>
+</html>

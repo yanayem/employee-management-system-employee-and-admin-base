@@ -1,0 +1,52 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <title>Employee Performance - Admin</title>
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // Enable Tailwind class-based dark mode
+      tailwind.config = { darkMode: "class" };
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
+
+{% include 'adminsidetopbar.html' %}
+
+<div class="ml-64 mt-16 p-6">
+    <h2 class="text-3xl font-bold mb-6">Employee Performance</h2>
+
+    <div class="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl shadow p-4">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead class="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-200">Employee</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-200">Department</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-200">Overall Rating</th>
+                    <th class="px-4 py-2 text-center text-sm font-medium text-gray-700 dark:text-gray-200">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                {% for item in performance_list %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                    <td class="px-4 py-2">{{ item.employee.full_name }}</td>
+                    <td class="px-4 py-2">{{ item.employee.department }}</td>
+                    <td class="px-4 py-2">{{ item.overall_rating }}/5</td>
+                    <td class="px-4 py-2 text-center space-x-2">
+                        <a href="{% url 'admin_performance_detail' item.employee.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm">View</a>
+                        <a href="{% url 'admin_performance_edit' item.employee.id %}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm">Edit</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center py-4 text-gray-500 dark:text-gray-300">No performance records found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

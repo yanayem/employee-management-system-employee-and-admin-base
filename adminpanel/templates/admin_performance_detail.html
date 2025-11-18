@@ -1,0 +1,218 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ employee.full_name }} - Performance</title>
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // Enable Tailwind class-based dark mode
+      tailwind.config = { darkMode: "class" };
+    </script>
+    <style>
+      html {
+        transition: background-color 0.3s, color 0.3s;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300 font-sans"
+  >
+    <!-- Top Bar -->
+    <header
+      class="w-full bg-white dark:bg-gray-800 shadow p-4 flex justify-between items-center fixed top-0 z-50"
+    >
+      <div class="flex items-center space-x-4">
+        <img
+          src="{% static 'images/logo.png' %}"
+          alt="Logo"
+          class="h-8 w-auto"
+        />
+        <h1 class="text-xl font-bold text-gray-700 dark:text-gray-200">
+          Admin Portal
+        </h1>
+      </div>
+      <div>
+        <button
+          id="theme-toggle"
+          class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1 rounded transition hover:bg-gray-300 dark:hover:bg-gray-600"
+        >
+          Toggle Dark Mode
+        </button>
+      </div>
+    </header>
+
+    <main class="pt-20 max-w-7xl mx-auto p-6">
+      <!-- Back Button -->
+      <a
+        href="{% url 'admin_performance_list' %}"
+        class="inline-block mb-6 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+      >
+        &larr; Back to List
+      </a>
+
+      <h2 class="text-3xl font-bold mb-4">
+        {{ employee.full_name }} - Performance
+      </h2>
+
+      {% if performance %}
+      <!-- Overall Rating -->
+      <p class="mb-6 text-gray-600 dark:text-gray-300 font-medium">
+        Overall Rating:
+        <span class="font-bold">{{ performance.overall_rating }}/5</span>
+      </p>
+
+      <!-- Performance Metrics -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <div
+          class="bg-white/50 dark:bg-gray-800/50 p-4 rounded-xl shadow-md hover:shadow-lg transition backdrop-blur-sm"
+        >
+          <p class="text-gray-700 dark:text-gray-200 font-semibold">
+            Goals Achieved
+          </p>
+          <p class="text-2xl font-bold">{{ performance.goals_achieved }}</p>
+        </div>
+        <div
+          class="bg-white/50 dark:bg-gray-800/50 p-4 rounded-xl shadow-md hover:shadow-lg transition backdrop-blur-sm"
+        >
+          <p class="text-gray-700 dark:text-gray-200 font-semibold">
+            Total Goals
+          </p>
+          <p class="text-2xl font-bold">{{ performance.total_goals }}</p>
+        </div>
+        <div
+          class="bg-white/50 dark:bg-gray-800/50 p-4 rounded-xl shadow-md hover:shadow-lg transition backdrop-blur-sm"
+        >
+          <p class="text-gray-700 dark:text-gray-200 font-semibold">
+            Projects Completed
+          </p>
+          <p class="text-2xl font-bold">{{ performance.projects_completed }}</p>
+        </div>
+        <div
+          class="bg-white/50 dark:bg-gray-800/50 p-4 rounded-xl shadow-md hover:shadow-lg transition backdrop-blur-sm"
+        >
+          <p class="text-gray-700 dark:text-gray-200 font-semibold">
+            Achievements
+          </p>
+          <p class="text-2xl font-bold">{{ performance.achievements }}</p>
+        </div>
+        <div
+          class="col-span-1 md:col-span-2 lg:col-span-3 bg-white/50 dark:bg-gray-800/50 p-4 rounded-xl shadow-md hover:shadow-lg transition backdrop-blur-sm"
+        >
+          <p class="text-gray-700 dark:text-gray-200 font-semibold">
+            Manager Comment
+          </p>
+          <p class="text-gray-600 dark:text-gray-300">
+            {{ performance.manager_comment|default:"No comment" }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Skills Section -->
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-semibold">Skills</h3>
+        <a
+          href="{% url 'admin_performance_skill_add' performance.id %}"
+          class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition"
+          >Add Skill</a
+        >
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        {% for skill in skills %}
+        <div
+          class="bg-white/50 dark:bg-gray-800/50 p-4 rounded-xl shadow-md hover:shadow-lg transition backdrop-blur-sm"
+        >
+          <div class="flex justify-between items-center mb-2">
+            <p class="font-medium text-gray-700 dark:text-gray-200">
+              {{ skill.skill.name }}
+            </p>
+            <div class="space-x-2">
+              <a
+                href="{% url 'admin_performance_skill_edit' performance.id skill.id %}"
+                class="text-blue-600 hover:underline"
+                >Edit</a
+              >
+              <a
+                href="{% url 'admin_performance_skill_delete' skill.id %}"
+                class="text-red-600 hover:underline"
+                >Delete</a
+              >
+            </div>
+          </div>
+          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
+            <div
+              class="h-4 rounded-full bg-{{ skill.skill.color }}-500"
+              style="width: {{ skill.value }}%"
+            ></div>
+          </div>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">
+            {{ skill.value }}%
+          </p>
+        </div>
+        {% empty %}
+        <p class="text-gray-500 dark:text-gray-300">No skills added yet.</p>
+        {% endfor %}
+      </div>
+      <!-- Feedback Section -->
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-semibold">Feedbacks</h3>
+        <a
+          href="{% url 'admin_performance_feedback_add' performance.id %}"
+          class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition"
+          >Add Feedback</a
+        >
+      </div>
+      <div class="space-y-4">
+        {% for fb in feedbacks %}
+        <div
+          class="bg-white/50 dark:bg-gray-800/50 p-4 rounded-xl shadow-md hover:shadow-lg transition backdrop-blur-sm"
+        >
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <p class="font-semibold text-gray-800 dark:text-gray-200">
+                {{ fb.author }}
+              </p>
+              <p class="text-gray-600 dark:text-gray-300">{{ fb.text }}</p>
+            </div>
+            <a
+              href="{% url 'admin_performance_feedback_delete' fb.id %}"
+              class="text-red-600 hover:underline"
+              >Delete</a
+            >
+          </div>
+          <p class="text-sm text-gray-400">
+            {{ fb.created_at|date:"M d, Y H:i" }}
+          </p>
+        </div>
+        {% empty %}
+        <p class="text-gray-500 dark:text-gray-300">No feedbacks yet.</p>
+        {% endfor %}
+      </div>
+
+      {% else %}
+      <p class="text-gray-500 dark:text-gray-300">
+        No performance record found for this employee.
+      </p>
+      {% endif %}
+    </main>
+
+    <script>
+      const toggle = document.getElementById("theme-toggle");
+
+      // Load theme from localStorage
+      if (localStorage.getItem("theme") === "dark") {
+        document.documentElement.classList.add("dark");
+      }
+
+      toggle.addEventListener("click", () => {
+        document.documentElement.classList.toggle("dark");
+        if (document.documentElement.classList.contains("dark")) {
+          localStorage.setItem("theme", "dark");
+        } else {
+          localStorage.setItem("theme", "light");
+        }
+      });
+    </script>
+  </body>
+</html>

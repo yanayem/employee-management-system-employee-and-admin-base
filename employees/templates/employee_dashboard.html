@@ -1,0 +1,156 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" x-data="{ sidebarOpen: false, darkMode: false }" :class="{ 'dark': darkMode }">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Dashboard</title>
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+</head>
+
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 flex">
+
+  <!-- Sidebar -->
+  {% include 'sideandtopbar.html' %}
+
+  <!-- Main content -->
+  <div class="flex-1 flex flex-col min-h-screen ml-0 md:ml-64 transition-all duration-300">
+
+    <!-- Top Navbar -->
+    <header class="flex justify-between items-center bg-white dark:bg-gray-800 shadow p-4">
+      <button @click="sidebarOpen = !sidebarOpen" class="md:hidden text-gray-800 dark:text-gray-100">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      <h1 class="text-2xl font-bold hidden md:block">Employee Dashboard</h1>
+
+      <div class="flex items-center space-x-4">
+        <button @click="darkMode = !darkMode"
+          class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded">Toggle Dark</button>
+
+        <div class="flex items-center space-x-2">
+          <span>{{ employee.full_name }}</span>
+          {% if profile.avatar %}
+          <img src="{{ profile.avatar.url }}" alt="Avatar" class="w-8 h-8 rounded-full">
+          {% else %}
+          <img src="{% static 'default_avatar.png' %}" alt="Avatar" class="w-8 h-8 rounded-full">
+          {% endif %}
+        </div>
+      </div>
+    </header>
+
+    <!-- Dashboard Content -->
+    <main class="p-6 grid grid-cols-1 gap-6">
+
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="p-4 bg-white dark:bg-gray-800 rounded shadow flex flex-col items-center">
+          <span class="text-lg font-semibold">Attendance</span>
+          <span class="text-3xl font-bold">{{ attendance_percent|default:0 }}%</span>
+        </div>
+
+        <div class="p-4 bg-white dark:bg-gray-800 rounded shadow flex flex-col items-center">
+          <span class="text-lg font-semibold">Leave Balance</span>
+          <span class="text-3xl font-bold">{{ balances.Annual|default:0 }}</span>
+        </div>
+
+        <div class="p-4 bg-white dark:bg-gray-800 rounded shadow flex flex-col items-center">
+          <span class="text-lg font-semibold">Week Hours</span>
+          <span class="text-3xl font-bold">{{ total_week_hours|default:"0h 0m" }}</span>
+        </div>
+
+        <div class="p-4 bg-white dark:bg-gray-800 rounded shadow flex flex-col items-center">
+          <span class="text-lg font-semibold">YTD Earnings</span>
+          <span class="text-3xl font-bold">${{ ytd_earnings|default:0 }}</span>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white dark:bg-gray-800 rounded shadow p-4">
+          <h2 class="text-lg font-bold mb-2">Attendance This Month</h2>
+          <canvas id="attendanceChart"></canvas>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded shadow p-4">
+          <h2 class="text-lg font-bold mb-2">Project Progress</h2>
+          <canvas id="projectChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Project Stats Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
+        {% for stat in project_stats %}
+        <div class="p-4 bg-white dark:bg-gray-800 rounded shadow flex flex-col items-center">
+          <i class="{{ stat.icon }} text-2xl {{ stat.icon_color }} mb-2"></i>
+          <span class="text-lg">{{ stat.label }}</span>
+          <span class="text-2xl font-bold">{{ stat.value }}</span>
+        </div>
+        {% endfor %}
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Chart.js Scripts -->
+  <script>
+    // Attendance Pie Chart
+    const ctxAttendance = document.getElementById('attendanceChart').getContext('2d');
+    new Chart(ctxAttendance, {
+      type: 'pie',
+      data: {
+        labels: ['Present', 'Late', 'Absent'],
+        datasets: [{
+          data: [
+            {{ total_present|default:0 }},
+            {{ late_days|default:0 }},
+            {{ total_absent|default:0 }}
+          ],
+          backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+
+    // Project Bar Chart
+    const ctxProject = document.getElementById('projectChart').getContext('2d');
+    new Chart(ctxProject, {
+      type: 'bar',
+      data: {
+        labels: [
+          {% for project in projects %}
+            '{{ project.name }}'{% if not forloop.last %},{% endif %}
+          {% endfor %}
+        ],
+        datasets: [{
+          label: 'Progress %',
+          data: [
+            {% for project in projects %}
+              {{ project.progress }}{% if not forloop.last %},{% endif %}
+            {% endfor %}
+          ],
+          backgroundColor: '#3B82F6'
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: { y: { beginAtZero: true, max: 100 } }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -6,9 +6,12 @@
   <title>Employee Portal | Managely</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="{% static 'css/theme.css' %}">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
-    integrity="sha512-pVtXkN6QPRk+9P1gTLuzbtS+0S6yG5VjsyV7u7DZq7G1bRmmNMC+Ocqk0E4/J2hUe3jq0+ZL3Nwkl6l0aA3/0w=="
-    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 </head>
 <body class="theme-bg-primary min-h-screen flex items-center justify-center p-4 transition-colors duration-300">
 
@@ -32,7 +35,7 @@
       </div>
 
       <!-- Login / First Login Form -->
-      <form id="employee-form" class="space-y-6 relative">
+      <form id="employee-form" method="POST" action="" class="space-y-6 relative">
         {% csrf_token %}
 
         <!-- Employee ID -->
@@ -79,36 +82,38 @@
     </div>
   </div>
 
-  <script>
+<script>
+/* =========================
+   ELEMENTS
+========================= */
 const form = document.getElementById("employee-form");
 const employeeIdInput = document.getElementById("employee-id");
 const passwordInput = document.getElementById("password");
 const confirmPasswordDiv = document.getElementById("confirm-password-div");
 const confirmPasswordInput = document.getElementById("confirm-password");
-const submitBtn = document.getElementById("form-submit-btn");
 const errorDiv = document.getElementById("form-error");
 const loginSubtitle = document.getElementById("login-subtitle");
 
+/* =========================
+   FIRST LOGIN FLAG
+========================= */
 let firstLogin = false;
 
-// CSRF token
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let cookie of cookies) {
-            cookie = cookie.trim();
-            if (cookie.startsWith(name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-const csrftoken = getCookie('csrftoken');
+/* =========================
+   CSRF TOKEN
+========================= */
+const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-form.addEventListener("submit", async (e) => {
+/* =========================
+   GET ?NEXT PARAMETER
+========================= */
+const urlParams = new URLSearchParams(window.location.search);
+const nextUrl = urlParams.get("next");
+
+/* =========================
+   FORM SUBMIT
+========================= */
+form.addEventListener("submit", function (e) {
     e.preventDefault();
     errorDiv.classList.add("hidden");
 
@@ -128,43 +133,82 @@ form.addEventListener("submit", async (e) => {
         return;
     }
 
-    // Create a form to submit
+    /* Create temporary form */
     const tempForm = document.createElement("form");
     tempForm.method = "POST";
-    tempForm.action = firstLogin ? "{% url 'accounts:change_password_first_login' %}" : "{% url 'accounts:login' %}";
+    tempForm.action = firstLogin
+        ? "{% url 'accounts:change_password_first_login' %}"
+        : "{% url 'accounts:login' %}";
 
-    // CSRF token
+    /* CSRF */
     const csrfInput = document.createElement("input");
     csrfInput.type = "hidden";
     csrfInput.name = "csrfmiddlewaretoken";
     csrfInput.value = csrftoken;
     tempForm.appendChild(csrfInput);
 
-    // Employee ID
-    const employeeInput = document.createElement("input");
-    employeeInput.type = "hidden";
-    employeeInput.name = "employee_id";
-    employeeInput.value = employeeId;
-    tempForm.appendChild(employeeInput);
+    /* Employee ID */
+    const empField = document.createElement("input");
+    empField.type = "hidden";
+    empField.name = "employee_id";
+    empField.value = employeeId;
+    tempForm.appendChild(empField);
 
-    // Password / New password
-    const passwordField = document.createElement("input");
-    passwordField.type = "hidden";
-    passwordField.name = firstLogin ? "new_password" : "password";
-    passwordField.value = password;
-    tempForm.appendChild(passwordField);
+    /* Password */
+    const passField = document.createElement("input");
+    passField.type = "hidden";
+    passField.name = firstLogin ? "new_password" : "password";
+    passField.value = password;
+    tempForm.appendChild(passField);
 
+    /* Confirm password */
     if (firstLogin) {
-        const confirmField = document.createElement("input");
-        confirmField.type = "hidden";
-        confirmField.name = "confirm_password";
-        confirmField.value = confirmPass;
-        tempForm.appendChild(confirmField);
+        const confField = document.createElement("input");
+        confField.type = "hidden";
+        confField.name = "confirm_password";
+        confField.value = confirmPass;
+        tempForm.appendChild(confField);
+    }
+
+    /* NEXT parameter */
+    if (nextUrl) {
+        const nextField = document.createElement("input");
+        nextField.type = "hidden";
+        nextField.name = "next";
+        nextField.value = nextUrl;
+        tempForm.appendChild(nextField);
     }
 
     document.body.appendChild(tempForm);
     tempForm.submit();
 });
+
+/* =========================
+   PASSWORD TOGGLE
+========================= */
+document.getElementById("toggle-password").addEventListener("click", () => {
+    if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        document.querySelector("#toggle-password i").classList.replace("fa-eye","fa-eye-slash");
+    } else {
+        passwordInput.type = "password";
+        document.querySelector("#toggle-password i").classList.replace("fa-eye-slash","fa-eye");
+    }
+});
+
+/* =========================
+   THEME TOGGLE
+========================= */
+document.getElementById("theme-toggle").addEventListener("click", () => {
+    const html = document.documentElement;
+    html.classList.toggle("dark");
+    localStorage.setItem("theme", html.classList.contains("dark") ? "dark" : "light");
+});
+
+/* Apply saved theme */
+if (localStorage.getItem("theme") === "dark") {
+    document.documentElement.classList.add("dark");
+}
 </script>
 
 </body>

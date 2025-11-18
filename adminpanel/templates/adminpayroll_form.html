@@ -1,0 +1,122 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <title>Payroll Form</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    <script>
+      // Enable Tailwind class-based dark mode
+      tailwind.config = { darkMode: "class" };
+    </script>
+</head>
+
+<body class="bg-gray-100 dark:bg-blue-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+
+<!-- Include Admin Sidebar + Topbar -->
+{% include 'adminsidetopbar.html' %}
+
+<div class="ml-64 mt-16 p-6">
+
+    <!-- PAGE TITLE -->
+    <h2 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100">
+        {% if payroll %} Edit Payroll {% else %} Add New Payroll {% endif %}
+    </h2>
+
+    <!-- MESSAGES -->
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="p-3 rounded-lg {% if message.tags == 'error' %}bg-red-200 text-red-800{% else %}bg-green-200 text-green-800{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- FORM -->
+    <form method="POST" class="bg-white dark:bg-blue-800 p-6 rounded-xl shadow-lg w-full md:w-2/3">
+        {% csrf_token %}
+
+        <!-- Employee -->
+        <label class="block mb-5">
+            <span class="font-semibold">Employee</span>
+            <select name="employee"
+                    class="w-full p-3 mt-1 rounded-lg border dark:bg-blue-700 dark:border-blue-600">
+                {% for emp in employees %}
+                <option value="{{ emp.id }}"
+                        {% if payroll and payroll.employee.id == emp.id %}selected{% endif %}>
+                    {{ emp.full_name }} ({{ emp.employee_id }})
+                </option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <!-- Month -->
+        <label class="block mb-5">
+            <span class="font-semibold">Month</span>
+            <input type="month" name="month"
+                   value="{% if payroll %}{{ payroll.month|date:'Y-m' }}{% endif %}"
+                   placeholder="e.g., 2025-11"
+                   class="w-full p-3 mt-1 rounded-lg border dark:bg-blue-700 dark:border-blue-600"
+                   required>
+        </label>
+
+        <!-- Gross Salary -->
+        <label class="block mb-5">
+            <span class="font-semibold">Gross Salary</span>
+            <input type="number" id="gross" name="gross_salary"
+                   value="{% if payroll %}{{ payroll.gross_salary }}{% endif %}"
+                   placeholder="Enter gross salary"
+                   class="w-full p-3 mt-1 rounded-lg border dark:bg-blue-700 dark:border-blue-600"
+                   required>
+        </label>
+
+        <!-- Deductions -->
+        <label class="block mb-5">
+            <span class="font-semibold">Deductions</span>
+            <input type="number" id="deductions" name="deductions"
+                   value="{% if payroll %}{{ payroll.deductions }}{% endif %}"
+                   placeholder="Enter deductions"
+                   class="w-full p-3 mt-1 rounded-lg border dark:bg-blue-700 dark:border-blue-600"
+                   required>
+        </label>
+
+        <!-- Net Pay (Auto-calculated) -->
+        <label class="block mb-6">
+            <span class="font-semibold">Net Pay</span>
+            <input type="number" id="netpay" name="net_pay"
+                   value="{% if payroll %}{{ payroll.net_pay }}{% endif %}"
+                   placeholder="Calculated automatically"
+                   class="w-full p-3 mt-1 rounded-lg border dark:bg-blue-700 dark:border-blue-600"
+                   readonly>
+        </label>
+
+        <!-- Buttons -->
+        <div class="flex items-center space-x-4">
+            <button type="submit"
+                    class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
+                Save
+            </button>
+
+            <a href="{% url 'admin_payroll' %}"
+               class="text-blue-500 hover:underline font-medium">
+                Cancel
+            </a>
+        </div>
+
+    </form>
+</div>
+
+<!-- AUTO-CALCULATE NET PAY JS -->
+<script>
+document.addEventListener("input", function () {
+    const gross = parseFloat(document.getElementById("gross").value) || 0;
+    const deductions = parseFloat(document.getElementById("deductions").value) || 0;
+    document.getElementById("netpay").value = gross - deductions;
+});
+</script>
+
+</body>
+</html>

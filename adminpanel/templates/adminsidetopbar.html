@@ -1,0 +1,153 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+      // Enable Tailwind class-based dark mode
+      tailwind.config = { darkMode: "class" };
+    </script>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body class="bg-white dark:bg-blue-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
+
+<!-- Topbar -->
+<header class="fixed top-0 left-0 right-0 h-16 bg-white dark:bg-blue-800 border-b border-gray-200 dark:border-blue-700 flex items-center justify-between px-6 z-50">
+  <!-- Left: Sidebar toggle + logo -->
+  <div class="flex items-center space-x-4">
+    <button id="sidebar-toggle" class="md:hidden text-gray-800 dark:text-gray-100 focus:outline-none">
+      <i class="fas fa-bars text-xl"></i>
+    </button>
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center">
+        <i class="fas fa-user-shield text-white"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold">Managely</h1>
+        <p class="text-xs text-gray-500 dark:text-gray-300">Admin Portal</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Notifications, theme, profile -->
+  <div class="flex items-center space-x-4">
+    <button class="relative text-gray-600 dark:text-gray-200 hover:text-gray-800 dark:hover:text-white transition-colors">
+      <i class="fas fa-bell text-xl"></i>
+      <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+    </button>
+
+    <!-- Theme toggle -->
+    <button id="theme-toggle" class="text-gray-600 dark:text-gray-200 hover:text-gray-800 dark:hover:text-white transition-colors">
+      <i class="fas fa-moon text-xl"></i>
+    TOG</button>
+
+    <!-- Profile dropdown -->
+    <div class="relative">
+      <button id="profile-dropdown-btn" class="flex items-center space-x-3 focus:outline-none">
+        <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
+          <span class="text-white font-semibold text-sm">AD</span>
+        </div>
+        <div class="hidden md:block text-left">
+          <p class="font-semibold">Administrator</p>
+          <p class="text-xs text-gray-500 dark:text-gray-300">System Admin</p>
+        </div>
+        <i class="fas fa-chevron-down text-sm"></i>
+      </button>
+      <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-blue-800 rounded-xl shadow-lg border border-gray-200 dark:border-blue-700 py-2">
+        <a href="{% url 'admin_profile' %}" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-blue-700">
+          <i class="fas fa-user mr-2"></i> Profile
+        </a>
+        <a href="#" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-blue-700">
+          <i class="fas fa-cog mr-2"></i> Settings
+        </a>
+        <hr class="my-2 border-gray-200 dark:border-blue-700">
+        <a href="{% url 'admin_logout' %}" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-blue-700">
+          <i class="fas fa-sign-out-alt mr-2"></i> Logout
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Sidebar -->
+<aside id="sidebar" class="fixed top-16 left-0 w-64 bg-white dark:bg-blue-800 border-r border-gray-200 dark:border-blue-700 min-h-[calc(100vh-4rem)] z-30 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+  <nav class="p-6">
+    <ul class="space-y-2">
+      <li>
+        <a href="{% url 'admin_dashboard' %}" class="flex items-center px-4 py-3 hover:bg-gray-200 dark:hover:bg-blue-700 rounded">
+          <i class="fas fa-tachometer-alt w-5"></i><span class="ml-3">Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'admin_employee_list' %}" class="flex items-center px-4 py-3 hover:bg-gray-200 dark:hover:bg-blue-700 rounded">
+          <i class="fas fa-users w-5"></i><span class="ml-3">Employees</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'admin_department_list' %}" class="flex items-center px-4 py-3 hover:bg-gray-200 dark:hover:bg-blue-700 rounded">
+          <i class="fas fa-building w-5"></i><span class="ml-3">Departments</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'admin_attendance_list' %}" class="flex items-center px-4 py-3 hover:bg-gray-200 dark:hover:bg-blue-700 rounded">
+          <i class="fas fa-clock w-5"></i><span class="ml-3">Attendance</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'admin_leave_list' %}" class="flex items-center px-4 py-3 hover:bg-gray-200 dark:hover:bg-blue-700 rounded">
+          <i class="fas fa-calendar-times w-5"></i><span class="ml-3">Leave Management</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'admin_payroll' %}" class="flex items-center px-4 py-3 hover:bg-gray-200 dark:hover:bg-blue-700 rounded">
+          <i class="fas fa-money-bill-wave w-5"></i><span class="ml-3">Payroll</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'admin_performance_list' %}" class="flex items-center px-4 py-3 hover:bg-gray-200 dark:hover:bg-blue-700 rounded">
+          <i class="fas fa-chart-line w-5"></i><span class="ml-3">Performance</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'admin_project_list'%}" class="flex items-center px-4 py-3 hover:bg-gray-200 dark:hover:bg-blue-700 rounded">
+          <i class="fas fa-file-alt w-5"></i><span class="ml-3">Projects</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'admin_settings' %}" class="flex items-center px-4 py-3 hover:bg-gray-200 dark:hover:bg-blue-700 rounded">
+          <i class="fas fa-cog w-5"></i><span class="ml-3">Settings</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+</aside>
+
+<script>
+  // Sidebar toggle
+  const sidebarToggle = document.getElementById('sidebar-toggle');
+  const sidebar = document.getElementById('sidebar');
+  sidebarToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('-translate-x-full');
+  });
+
+  // Profile dropdown
+  const profileBtn = document.getElementById('profile-dropdown-btn');
+  const profileMenu = document.getElementById('profile-dropdown');
+  profileBtn.addEventListener('click', () => {
+    profileMenu.classList.toggle('hidden');
+  });
+
+  // Dark/light toggle
+  const themeBtn = document.getElementById('theme-toggle');
+  themeBtn.addEventListener('click', () => {
+    document.documentElement.classList.toggle('dark');
+  });
+</script>
+
+</body>
+</html>

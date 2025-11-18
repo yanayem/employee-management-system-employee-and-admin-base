@@ -27,9 +27,92 @@ def get_logged_in_employee(request):
 # ===============================
 # Dashboard
 # ===============================
+# employees/views.py
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from django.db.models import Sum
+from accounts.models import EmployeeProfile
+from .models import Attendance, LeaveRequest, Payroll, Project
+
+
+
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from django.db.models import Sum
+from .models import Attendance, LeaveRequest, Payroll, Project
+from accounts.models import EmployeeProfile
+
 @login_required
-def dashboard(request):
-    return render(request, 'sideandtopbar.html')
+def dashboard_view(request):
+    """
+    Employee dashboard with stats, projects, charts, dark mode toggle.
+    """
+    employee = get_logged_in_employee(request)
+    if not employee:
+        return redirect('accounts:login')
+
+    today = timezone.localdate()
+
+    # Attendance stats
+    month_records = Attendance.objects.filter(employee=employee, date__month=today.month)
+    total_present = month_records.filter(status="Present").count()
+    late_days = month_records.filter(status="Late").count()
+    total_absent = month_records.count() - total_present - late_days
+    if total_absent < 0:
+        total_absent = 0  # safety check
+    attendance_percent = round((total_present / month_records.count()) * 100, 1) if month_records.exists() else 0
+
+    # Week hours
+    week_records = Attendance.objects.filter(employee=employee, date__gte=today - timezone.timedelta(days=7))
+    total_week_hours = sum(
+        ((timezone.datetime.combine(r.date, r.check_out) - timezone.datetime.combine(r.date, r.check_in)).total_seconds() / 3600)
+        for r in week_records if r.check_in and r.check_out
+    )
+    total_week_hours_formatted = f"{int(total_week_hours)}h {int((total_week_hours*60)%60)}m"
+
+    # Leave balances
+    leave_requests = LeaveRequest.objects.filter(employee=employee, status="Approved")
+    balances = {
+        "Annual": 18 - sum(l.total_days() for l in leave_requests.filter(leave_type="Annual")),
+        "Sick": 8 - sum(l.total_days() for l in leave_requests.filter(leave_type="Sick")),
+        "Personal": 5 - sum(l.total_days() for l in leave_requests.filter(leave_type="Personal")),
+        "Maternity": 90 - sum(l.total_days() for l in leave_requests.filter(leave_type="Maternity")),
+        "Emergency": 5 - sum(l.total_days() for l in leave_requests.filter(leave_type="Emergency")),
+    }
+
+    # Payroll
+    payrolls = Payroll.objects.filter(employee=employee).order_by('-month')
+    ytd_earnings = payrolls.aggregate(total_gross=Sum('gross_salary'))['total_gross'] or 0
+
+    # Projects
+    projects = Project.objects.filter(assigned_to=employee)
+    success_rate = round(sum(p.progress for p in projects) / projects.count()) if projects.exists() else 0
+
+    project_stats = [
+        {"label": "Active Projects", "value": projects.filter(status="In Progress").count(), "icon": "fas fa-tasks", "icon_color": "text-blue-600"},
+        {"label": "Completed", "value": projects.filter(status="Completed").count(), "icon": "fas fa-check-circle", "icon_color": "text-green-600"},
+        {"label": "Pending Review", "value": projects.filter(status="Review").count(), "icon": "fas fa-clock", "icon_color": "text-yellow-600"},
+        {"label": "Success Rate", "value": success_rate, "icon": "fas fa-percentage", "icon_color": "text-purple-600"},
+    ]
+
+    context = {
+        "employee": employee,
+        "attendance_percent": attendance_percent,
+        "total_present": total_present,
+        "late_days": late_days,
+        "total_absent": total_absent,   # ✅ Added
+        "month_records": month_records,
+        "total_week_hours": total_week_hours_formatted,
+        "balances": balances,
+        "ytd_earnings": ytd_earnings,
+        "projects": projects,
+        "project_stats": project_stats,
+    }
+
+    return render(request, 'employee_dashboard.html', context)
 
 
 # ===============================

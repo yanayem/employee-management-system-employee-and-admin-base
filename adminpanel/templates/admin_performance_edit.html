@@ -1,0 +1,122 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Performance - {{ employee.full_name }}</title>
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // Enable Tailwind class-based dark mode
+      tailwind.config = { darkMode: "class" };
+    </script>
+    <script>
+        // Dark mode toggle
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300 font-sans">
+
+<!-- Top Bar -->
+<header class="w-full bg-white dark:bg-gray-800 shadow p-4 flex justify-between items-center fixed top-0 z-50">
+    <div class="flex items-center space-x-4">
+        <img src="{% static 'images/logo.png' %}" alt="Logo" class="h-8 w-auto">
+        <h1 class="text-xl font-bold text-gray-700 dark:text-gray-200">Admin Portal</h1>
+    </div>
+    <div class="flex items-center space-x-4">
+        <button onclick="toggleDarkMode()" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1 rounded transition hover:bg-gray-300 dark:hover:bg-gray-600">
+            Toggle Dark Mode
+        </button>
+    </div>
+</header>
+
+<main class="pt-20 max-w-7xl mx-auto p-6">
+
+    <!-- Back Button -->
+    <a href="{% url 'admin_performance_detail' employee.id %}" class="inline-block mb-6 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+        &larr; Back to Performance
+    </a>
+
+    <h2 class="text-3xl font-bold mb-6">Edit Performance - {{ employee.full_name }}</h2>
+
+    <!-- Performance Metrics Form -->
+    <form method="POST" class="bg-white/50 dark:bg-gray-800/50 p-6 rounded-xl shadow-md backdrop-blur-sm mb-8 transition hover:shadow-lg">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block font-medium mb-1">Goals Achieved</label>
+                <input type="number" name="goals_achieved" value="{{ performance.goals_achieved }}" class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100">
+            </div>
+            <div>
+                <label class="block font-medium mb-1">Total Goals</label>
+                <input type="number" name="total_goals" value="{{ performance.total_goals }}" class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100">
+            </div>
+            <div>
+                <label class="block font-medium mb-1">Projects Completed</label>
+                <input type="number" name="projects_completed" value="{{ performance.projects_completed }}" class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100">
+            </div>
+            <div>
+                <label class="block font-medium mb-1">Achievements</label>
+                <input type="number" name="achievements" value="{{ performance.achievements }}" class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100">
+            </div>
+        </div>
+        <div class="mt-4">
+            <label class="block font-medium mb-1">Manager Comment</label>
+            <textarea name="manager_comment" rows="4" class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100">{{ performance.manager_comment }}</textarea>
+        </div>
+        <button type="submit" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition">Save Changes</button>
+    </form>
+
+    <!-- Skills Section -->
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-semibold">Skills</h3>
+        <a href="{% url 'admin_performance_skill_add' performance.id %}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition">Add Skill</a>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        {% for ps in performance.skills.all %}
+        <div class="bg-white/50 dark:bg-gray-800/50 p-4 rounded-xl shadow-md hover:shadow-lg transition backdrop-blur-sm">
+            <div class="flex justify-between items-center mb-2">
+                <p class="font-medium text-gray-700 dark:text-gray-200">{{ ps.skill.name }}</p>
+                <div class="space-x-2">
+                    <a href="{% url 'admin_performance_skill_edit' performance.id ps.id %}" class="text-blue-600 hover:underline">Edit</a>
+                    <a href="{% url 'admin_performance_skill_delete' ps.id %}" class="text-red-600 hover:underline">Delete</a>
+                </div>
+            </div>
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
+                <div class="h-4 rounded-full bg-{{ ps.skill.color }}-500" style="width: {{ ps.value }}%"></div>
+            </div>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">{{ ps.value }}%</p>
+        </div>
+        {% empty %}
+        <p class="text-gray-500 dark:text-gray-300">No skills added yet.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Feedback Section -->
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-semibold">Feedbacks</h3>
+        <a href="{% url 'admin_performance_feedback_add' performance.id %}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition">Add Feedback</a>
+    </div>
+    <div class="space-y-4">
+        {% for fb in performance.feedbacks.all %}
+        <div class="bg-white/50 dark:bg-gray-800/50 p-4 rounded-xl shadow-md hover:shadow-lg transition backdrop-blur-sm">
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                    <p class="font-semibold text-gray-800 dark:text-gray-200">{{ fb.author }}</p>
+                    <p class="text-gray-600 dark:text-gray-300">{{ fb.text }}</p>
+                </div>
+                <a href="{% url 'admin_performance_feedback_delete' fb.id %}" class="text-red-600 hover:underline">Delete</a>
+            </div>
+            <p class="text-sm text-gray-400">{{ fb.created_at|date:"M d, Y H:i" }}</p>
+        </div>
+        {% empty %}
+        <p class="text-gray-500 dark:text-gray-300">No feedbacks yet.</p>
+        {% endfor %}
+    </div>
+
+</main>
+
+</body>
+</html>

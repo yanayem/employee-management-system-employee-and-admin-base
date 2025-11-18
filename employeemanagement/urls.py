@@ -1,16 +1,23 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.contrib.auth import views as auth_views
 from . import views
-from django.conf import settings            # <-- import settings
-from django.conf.urls.static import static # <-- import static
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', views.home, name='home'),  # Home page (role selection)
+    # Optional: Django default admin at /adminportal/
+    path('adminportal/', admin.site.urls),  # <-- NO include(), just admin.site.urls
+
+    # Custom admin dashboard and logout
+    path('admin/', include('adminpanel.urls')),
+
+    # Other app URLs
+    path('', views.home, name='home'),
     path('accounts/', include('accounts.urls')),
     path('employees/', include('employees.urls')),
 ]
 
-# Serving media files during development
+# Serve media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -28,6 +28,18 @@ SECRET_KEY = 'django-insecure-lkh0g-0jzk6t+$p@fi&kc6ay=_p*ap$x#20w0j8%ek^eto&1n+
 DEBUG = True
 
 ALLOWED_HOSTS = []
+'''ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "employee-management-system-employee-and.onrender.com",
+    "localhost",
+    "127.0.0.1",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://employee-management-system-employee-and.onrender.com",
+    "http://localhost",
+    "http://127.0.0.1",
+]'''
 
 
 # Application definition
@@ -41,6 +53,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'accounts',
     'employees',
+    'adminpanel', 
 ]
 
 MIDDLEWARE = [
@@ -59,7 +72,10 @@ ROOT_URLCONF = 'employeemanagement.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [
+                BASE_DIR / 'templates'
+                 ],
+        
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -133,3 +149,23 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+#------------------------
+#Admin Panel Settings
+#------------------------
+
+LOGIN_REDIRECT_URL = '/admin/dashboard/'
+LOGOUT_REDIRECT_URL = '/admin/'
+
+
+#==============================
+# Email Settings
+#==============================
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'       # for Gmail
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'your-email@gmail.com'
+EMAIL_HOST_PASSWORD = 'your-app-password'  # use app password for Gmail
+DEFAULT_FROM_EMAIL = 'your-email@gmail.com'

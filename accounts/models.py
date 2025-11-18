@@ -19,6 +19,9 @@ class EmployeeProfile(models.Model):
     password = models.CharField(max_length=128)  # store raw for now
     first_login = models.BooleanField(default=True)
     temp_password = models.CharField(max_length=20, blank=True)  # one-time password
+    email = models.EmailField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+
 
     def save(self, *args, **kwargs):
         if not self.employee_id:

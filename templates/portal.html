@@ -5,12 +5,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Managely - Role Selection</title>
-  
-  <!-- Font Awesome CDN -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-pVtXkN6QPRk+9P1gTLuzbtS+0S6yG5VjsyV7u7DZq7G1bRmmNMC+Ocqk0E4/J2hUe3jq0+ZL3Nwkl6l0aA3/0w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+   <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
   <style>
     body {
@@ -71,7 +75,7 @@
               <div class="flex items-center justify-center space-x-2"><i class="fas fa-check text-green-600"></i> <span>System Administration</span></div>
             </div>
             <button class="w-full bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 text-white py-3 rounded-lg font-medium transition-all duration-300"
-                    onclick="window.location.href='{% url 'admin:index' %}'">
+                    onclick="window.location.href='{% url 'admin_login' %}'">
               Access Admin Portal
             </button>
           </div>
