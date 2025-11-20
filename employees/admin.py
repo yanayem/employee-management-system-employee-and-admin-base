@@ -6,9 +6,8 @@ from .models import (
     Performance,
     PerformanceSkill,
     Feedback,
-    Skill;
+    Skill
 )
-from acco.models import (EmployeeData)
 
 # =========================
 # Attendance Admin
@@ -110,56 +109,19 @@ class DocumentAdmin(admin.ModelAdmin):
 # Profile Model Admin
 # ===============================
 
+# employees/admin.py
+from django.contrib import admin
+from .models import EmployeeData
+
 @admin.register(EmployeeData)
 class EmployeeDataAdmin(admin.ModelAdmin):
-    list_display = (
-        "employee",
+    list_display = ("employee", "designation", "department", "role", "joining_date")
+    search_fields = (
+        "employee__employee_id",
+        "employee__phone",
         "designation",
         "department",
-        "joining_date",
-        "tenure_years",
+        "role"
     )
-
-    list_filter = ("department", "designation")
-    search_fields = (
-        "employee__full_name",
-        "employee__employee_id",
-        "designation",
-    )
-
-    readonly_fields = ("avatar_preview",)
-
-    fieldsets = (
-        ("Employee Info", {
-            "fields": (
-                "employee",
-                "designation",
-                "department",
-                "role",
-            )
-        }),
-
-        ("Additional Details", {
-            "fields": (
-                "joining_date",
-                "address",
-                "emergency_contact",
-            )
-        }),
-
-        ("Avatar", {
-            "fields": (
-                "avatar",
-                "avatar_preview",
-            )
-        }),
-    )
-
-    # ===== Avatar Preview =====
-    def avatar_preview(self, obj):
-        if obj.avatar:
-            return f'<img src="{obj.avatar.url}" width="80" style="border-radius:8px;" />'
-        return "No image"
-
-    avatar_preview.allow_tags = True
-    avatar_preview.short_description = "Avatar Preview"
+    list_filter = ("department", "role", "joining_date")
+    readonly_fields = ("employee",)

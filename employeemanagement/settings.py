@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-lkh0g-0jzk6t+$p@fi&kc6ay=_p*ap$x#20w0j8%ek^eto&1n+
 DEBUG = True
 
 ALLOWED_HOSTS = []
-'''ALLOWED_HOSTS = []
+ALLOWED_HOSTS = []
 ALLOWED_HOSTS = [
     "employee-management-system-employee-and.onrender.com",
     "localhost",
@@ -39,7 +39,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://employee-management-system-employee-and.onrender.com",
     "http://localhost",
     "http://127.0.0.1",
-]'''
+]
 
 
 # Application definition
@@ -65,6 +65,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "django.middleware.csrf.CsrfViewMiddleware",
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'employeemanagement.urls'
