@@ -9,7 +9,7 @@ from employees.models import Project, LeaveRequest, Attendance, Performance
 from datetime import datetime, timedelta
 from django.db.models import Count
 
-@login_required(login_url="/admin/")
+@login_required(login_url="/adminportal/admin/")
 def dashboard(request):
     # Stats cards
     total_employees = EmployeeProfile.objects.count()

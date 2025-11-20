@@ -1,15 +1,16 @@
-# employees/views.py
-
 from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Sum
-from .models import Attendance, LeaveRequest, Payroll, Performance, Project
-from .forms import LeaveRequestForm
 from accounts.models import EmployeeProfile
+from .models import (
+    Attendance, LeaveRequest, Payroll, Performance, Project, EmployeeData, Document
+)
+from .forms import LeaveRequestForm
 
-
+# -------------------------------
+# Helper function
+# -------------------------------
 def get_logged_in_employee(request):
     """
     Retrieve the currently logged-in employee using session.
@@ -23,36 +24,13 @@ def get_logged_in_employee(request):
     except EmployeeProfile.DoesNotExist:
         return None
 
-
 # ===============================
 # Dashboard
 # ===============================
-# employees/views.py
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from django.utils import timezone
-from django.db.models import Sum
-from accounts.models import EmployeeProfile
-from .models import Attendance, LeaveRequest, Payroll, Project
-
-
-
-
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from django.utils import timezone
-from django.db.models import Sum
-from .models import Attendance, LeaveRequest, Payroll, Project
-from accounts.models import EmployeeProfile
-
-@login_required
 def dashboard_view(request):
-    """
-    Employee dashboard with stats, projects, charts, dark mode toggle.
-    """
     employee = get_logged_in_employee(request)
     if not employee:
-        return redirect('accounts:login')
+        return redirect('accounts:employee_login_page')
 
     today = timezone.localdate()
 
@@ -61,8 +39,7 @@ def dashboard_view(request):
     total_present = month_records.filter(status="Present").count()
     late_days = month_records.filter(status="Late").count()
     total_absent = month_records.count() - total_present - late_days
-    if total_absent < 0:
-        total_absent = 0  # safety check
+    total_absent = max(total_absent, 0)
     attendance_percent = round((total_present / month_records.count()) * 100, 1) if month_records.exists() else 0
 
     # Week hours
@@ -103,7 +80,7 @@ def dashboard_view(request):
         "attendance_percent": attendance_percent,
         "total_present": total_present,
         "late_days": late_days,
-        "total_absent": total_absent,   # ✅ Added
+        "total_absent": total_absent,
         "month_records": month_records,
         "total_week_hours": total_week_hours_formatted,
         "balances": balances,
@@ -118,7 +95,6 @@ def dashboard_view(request):
 # ===============================
 # Attendance
 # ===============================
-@login_required
 def attendance_view(request):
     employee = get_logged_in_employee(request)
     if not employee:
@@ -178,7 +154,6 @@ def attendance_view(request):
 # ===============================
 # Leave
 # ===============================
-@login_required
 def leave_view(request):
     employee = get_logged_in_employee(request)
     if not employee:
@@ -216,7 +191,10 @@ def leave_view(request):
     return render(request, "leave.html", context)
 
 
-@login_required
+#=================
+#
+#=======================
+
 def apply_leave_view(request):
     employee = get_logged_in_employee(request)
     if not employee:
@@ -243,7 +221,6 @@ def apply_leave_view(request):
 # ===============================
 # Payroll
 # ===============================
-@login_required
 def payroll_view(request):
     employee = get_logged_in_employee(request)
     if not employee:
@@ -264,7 +241,6 @@ def payroll_view(request):
 # ===============================
 # Performance
 # ===============================
-@login_required
 def performance_view(request):
     employee = get_logged_in_employee(request)
     if not employee:
@@ -291,7 +267,6 @@ def performance_view(request):
 # ===============================
 # Projects
 # ===============================
-@login_required
 def projects_view(request):
     # Get the logged-in employee
     employee = get_logged_in_employee(request)
@@ -349,8 +324,6 @@ def projects_view(request):
 #--------------------------------
 # Project Detail View
 #--------------------------------
-
-@login_required
 def project_detail_view(request, pk):
     employee = get_logged_in_employee(request)
     if not employee:
@@ -371,104 +344,22 @@ def project_detail_view(request, pk):
 # ===============================
 # Other Pages
 # ===============================
-# employees/views.py
 from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from accounts.models import EmployeeProfile
-from .models import Document  # Assuming you have a Document model
-
-def get_logged_in_employee(request):
-    """
-    Retrieve the currently logged-in employee using session.
-    Returns None if not found.
-    """
-    employee_id = request.session.get('employee_id')
-    if not employee_id:
-        return None
-    try:
-        return EmployeeProfile.objects.get(employee_id=employee_id)
-    except EmployeeProfile.DoesNotExist:
-        return None
-
-@login_required
-def documents_view(request):
-    """
-    Display documents page for the logged-in employee.
-    """
-    employee = get_logged_in_employee(request)
-    if not employee:
-        return redirect('accounts:login')
-
-    # Fetch documents by category
-    # Assuming Document model has fields: category, title, file, view_only (bool)
-    personal_docs = Document.objects.filter(employee=employee, category='Personal')
-    payroll_docs = Document.objects.filter(employee=employee, category='Payroll')
-    company_policies = Document.objects.filter(employee=employee, category='Company Policies')
-    certificates = Document.objects.filter(employee=employee, category='Certificates')
-    forms = Document.objects.filter(employee=employee, category='Forms')
-    it_docs = Document.objects.filter(employee=employee, category='IT')
-
-    context = {
-        'personal_docs': personal_docs,
-        'payroll_docs': payroll_docs,
-        'company_policies': company_policies,
-        'certificates': certificates,
-        'forms': forms,
-        'it_docs': it_docs,
-        'employee': employee,
-    }
-
-    return render(request, 'documents.html', context)
-
-#===============================
-# Profile View
-#===============================
-
-# employees/views.py
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from accounts.models import EmployeeProfile
+from django.contrib import messages
 from .models import EmployeeData
+  # your custom login check
 
-
-@login_required
 def profile_view(request):
-    """
-    Display employee profile and allow editing of EmployeeData.
-    """
     employee = get_logged_in_employee(request)
-    if not employee:
-        return redirect("accounts:login")
-
-    # Try to fetch EmployeeData or create blank if not exist
-    profile, created = EmployeeData.objects.get_or_create(employee=employee)
-
-    context = {
-        "employee": employee,
-        "profile": profile,
-    }
-
-    return render(request, "profile.html", context)
-
-#===============================
-#Edit Profile View
-#===============================
-
-@login_required
-def edit_profile(request):
-    employee = get_logged_in_employee(request)
-    if not employee:
-        return redirect('accounts:login')
-
-    # Get or create EmployeeData
     profile, _ = EmployeeData.objects.get_or_create(employee=employee)
 
     if request.method == "POST":
-        # update fields
-        profile.full_name = request.POST.get("full_name", profile.full_name)
+        # Update only the fields from the form
         profile.designation = request.POST.get("designation", profile.designation)
         profile.department = request.POST.get("department", profile.department)
-        profile.joining_date = request.POST.get("joining_date", profile.joining_date)
+        joining_date = request.POST.get("joining_date")
+        if joining_date:
+            profile.joining_date = joining_date
         profile.address = request.POST.get("address", profile.address)
         profile.emergency_contact = request.POST.get("emergency_contact", profile.emergency_contact)
         profile.role = request.POST.get("role", profile.role)
@@ -478,9 +369,4 @@ def edit_profile(request):
         messages.success(request, "Profile updated successfully!")
         return redirect("employees:profile")
 
-    context = {"profile": profile, "employee": employee}
-    return render(request, "edit_profile.html", context)
-
-@login_required
-def support(request):
-    return render(request, 'support.html')
+    return render(request, "profile.html", {"employee": employee, "profile": profile})

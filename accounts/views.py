@@ -1,18 +1,18 @@
 from django.shortcuts import render, redirect
-from .models import EmployeeProfile
 from django.contrib import messages
+from .models import EmployeeProfile
 
+# ---------------------------
+# LOGIN PAGE
+# ---------------------------
 def employee_login_page(request):
-    """
-    Render the unified login/change-password page.
-    """
     return render(request, "employee_login.html")
 
 
+# ---------------------------
+# LOGIN SUBMISSION
+# ---------------------------
 def login_view(request):
-    """
-    Handle employee login via standard POST form.
-    """
     if request.method == "POST":
         employee_id = request.POST.get("employee_id")
         password = request.POST.get("password")
@@ -23,32 +23,32 @@ def login_view(request):
 
         try:
             profile = EmployeeProfile.objects.get(employee_id=employee_id)
-            if profile.check_password(password):
-                # Store employee_id in session
-                request.session['employee_id'] = profile.employee_id
-
-                # Redirect to change-password page if first login
-                if profile.first_login:
-                    return redirect('accounts:change_password_first_login')
-                
-                return redirect('employees:attendance')  # redirect to attendance page
-            else:
-                messages.error(request, "Invalid password.")
-                return redirect('accounts:employee_login_page')
-
         except EmployeeProfile.DoesNotExist:
             messages.error(request, "Employee ID not found.")
             return redirect('accounts:employee_login_page')
 
-    # GET request
+        if not profile.check_password(password):
+            messages.error(request, "Invalid password.")
+            return redirect('accounts:employee_login_page')
+
+        # Store session
+        request.session['employee_id'] = profile.employee_id
+
+        # First login → change password
+        if profile.first_login:
+            return redirect('accounts:change_password_first_login')
+
+        # Normal login → dashboard
+        return redirect('employees:dashboard')
+
     return render(request, "employee_login.html")
 
 
+# ---------------------------
+# FIRST LOGIN PASSWORD CHANGE
+# ---------------------------
 def change_password_first_login(request):
-    """
-    Handle password change for first login via POST form.
-    """
-    employee_id = request.session.get('employee_id')
+    employee_id = request.session.get("employee_id")
     if not employee_id:
         messages.error(request, "Session expired. Please login again.")
         return redirect('accounts:employee_login_page')
@@ -71,21 +71,22 @@ def change_password_first_login(request):
             messages.error(request, "Passwords do not match.")
             return redirect('accounts:change_password_first_login')
 
-        # Set new password
+        # Save new password
         profile.set_password(new_pass)
         profile.first_login = False
         profile.save()
 
-        messages.success(request, "Password changed successfully. Please login.")
+        messages.success(request, "Password changed successfully. Please login again.")
+        request.session.flush()  # logout after password change
         return redirect('accounts:employee_login_page')
 
     return render(request, "change_password_first_login.html")
 
 
+# ---------------------------
+# LOGOUT
+# ---------------------------
 def logout_view(request):
-    """
-    Logout employee and clear session.
-    """
     request.session.flush()
     messages.success(request, "You have been logged out.")
     return redirect('accounts:employee_login_page')

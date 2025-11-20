@@ -4,15 +4,41 @@
 <head>
   <meta charset="UTF-8">
   <title>Employee Portal | Managely</title>
+  
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
-  <script>
-    tailwind.config = { darkMode: 'class' }
-  </script>
+  <script>tailwind.config = { darkMode: "class" };</script>
 
   <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    /* Custom Theme Variables */
+    :root {
+      --bg-primary: #f9fafb;
+      --bg-secondary: #ffffff;
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --border-color: #e5e7eb;
+    }
+
+    .dark {
+      --bg-primary: #1f2937;
+      --bg-secondary: #111827;
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --border-color: #374151;
+    }
+
+    .theme-bg-primary { background-color: var(--bg-primary); }
+    .theme-bg-secondary { background-color: var(--bg-secondary); }
+    .theme-text-primary { color: var(--text-primary); }
+    .theme-text-secondary { color: var(--text-secondary); }
+    .theme-border { border-color: var(--border-color); }
+  </style>
 </head>
+
 <body class="theme-bg-primary min-h-screen flex items-center justify-center p-4 transition-colors duration-300">
 
   <!-- Dark/Light Toggle -->
@@ -23,7 +49,7 @@
   </div>
 
   <div class="max-w-md w-full">
-    <div class="theme-bg-primary rounded-2xl shadow-2xl p-8 theme-border border transition-colors duration-300">
+    <div class="theme-bg-secondary rounded-2xl shadow-2xl p-8 theme-border border transition-colors duration-300">
 
       <!-- Header -->
       <div class="text-center mb-8">
@@ -34,182 +60,84 @@
         <p id="login-subtitle" class="theme-text-secondary">Employee Portal Login</p>
       </div>
 
-      <!-- Login / First Login Form -->
-      <form id="employee-form" method="POST" action="" class="space-y-6 relative">
+      <!-- Login Form -->
+      <form method="POST" action="{% url 'accounts:login' %}" class="space-y-6">
         {% csrf_token %}
 
         <!-- Employee ID -->
-        <div id="login-employee-id-div">
+        <div>
           <label class="block text-sm font-medium theme-text-primary mb-2">Employee ID</label>
-          <input id="employee-id" type="text" name="employee_id"
-            class="w-full theme-bg-secondary theme-border border rounded-lg px-4 py-3 theme-text-primary focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter your employee ID" required>
+          <input type="text" name="employee_id" required
+                 class="w-full theme-bg-primary theme-border border rounded-lg px-4 py-3 theme-text-primary focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                 placeholder="Enter your employee ID">
         </div>
 
         <!-- Password -->
         <div class="relative">
-          <label id="password-label" class="block text-sm font-medium theme-text-primary mb-2">Password</label>
-          <input id="password" type="password" name="password"
-            class="w-full theme-bg-secondary theme-border border rounded-lg px-4 py-3 theme-text-primary focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter your password" required>
-          <button type="button" id="toggle-password" class="absolute right-3 top-10 text-gray-900 hover:text-gray-700">
+          <label class="block text-sm font-medium theme-text-primary mb-2">Password</label>
+          <input type="password" name="password" required
+                 class="w-full theme-bg-primary theme-border border rounded-lg px-4 py-3 theme-text-primary focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                 placeholder="Enter your password" id="password">
+          <button type="button" id="toggle-password" class="absolute right-3 top-10 text-gray-900 dark:text-gray-200">
             <i class="fas fa-eye"></i>
           </button>
         </div>
 
-        <!-- Confirm Password (first login only) -->
-        <div id="confirm-password-div" class="hidden">
+        <!-- First-login confirm password -->
+        {% if first_login %}
+        <div>
           <label class="block text-sm font-medium theme-text-primary mb-2">Confirm Password</label>
-          <input id="confirm-password" type="password" name="confirm_password"
-            class="w-full theme-bg-secondary theme-border border rounded-lg px-4 py-3 theme-text-primary focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Confirm your password">
+          <input type="password" name="confirm_password" required
+                 class="w-full theme-bg-primary theme-border border rounded-lg px-4 py-3 theme-text-primary focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                 placeholder="Confirm your password">
         </div>
+        {% endif %}
 
-        <!-- Submit Button -->
-        <button type="submit" id="form-submit-btn" class="w-full btn-primary text-black py-3 rounded-lg font-medium">
+        <!-- Submit -->
+        <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-medium transition">
           Sign In
         </button>
 
-        <!-- Back Button -->
         <button type="button" onclick="window.location.href='/'"
-          class="w-full mt-2 border border-gray-300 theme-text-primary py-3 rounded-lg font-medium hover:bg-gray-100 transition">
-           Back to Portal Selection 
+                class="w-full mt-2 border theme-border theme-text-primary py-3 rounded-lg font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+          Back to Portal Selection
         </button>
 
-        <div id="form-error" class="text-red-500 text-sm mt-4 text-center hidden"></div>
+        {% if messages %}
+        <div class="mt-4 text-center">
+          {% for message in messages %}
+            <p class="text-sm {% if message.tags == 'error' %}text-red-500{% else %}text-green-500{% endif %}">{{ message }}</p>
+          {% endfor %}
+        </div>
+        {% endif %}
       </form>
-
     </div>
   </div>
 
-<script>
-/* =========================
-   ELEMENTS
-========================= */
-const form = document.getElementById("employee-form");
-const employeeIdInput = document.getElementById("employee-id");
-const passwordInput = document.getElementById("password");
-const confirmPasswordDiv = document.getElementById("confirm-password-div");
-const confirmPasswordInput = document.getElementById("confirm-password");
-const errorDiv = document.getElementById("form-error");
-const loginSubtitle = document.getElementById("login-subtitle");
-
-/* =========================
-   FIRST LOGIN FLAG
-========================= */
-let firstLogin = false;
-
-/* =========================
-   CSRF TOKEN
-========================= */
-const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-/* =========================
-   GET ?NEXT PARAMETER
-========================= */
-const urlParams = new URLSearchParams(window.location.search);
-const nextUrl = urlParams.get("next");
-
-/* =========================
-   FORM SUBMIT
-========================= */
-form.addEventListener("submit", function (e) {
-    e.preventDefault();
-    errorDiv.classList.add("hidden");
-
-    const employeeId = employeeIdInput.value.trim();
-    const password = passwordInput.value.trim();
-    const confirmPass = confirmPasswordInput.value.trim();
-
-    if (!employeeId || !password) {
-        errorDiv.textContent = "Employee ID and password are required.";
-        errorDiv.classList.remove("hidden");
-        return;
-    }
-
-    if (firstLogin && !confirmPass) {
-        errorDiv.textContent = "Please confirm your new password.";
-        errorDiv.classList.remove("hidden");
-        return;
-    }
-
-    /* Create temporary form */
-    const tempForm = document.createElement("form");
-    tempForm.method = "POST";
-    tempForm.action = firstLogin
-        ? "{% url 'accounts:change_password_first_login' %}"
-        : "{% url 'accounts:login' %}";
-
-    /* CSRF */
-    const csrfInput = document.createElement("input");
-    csrfInput.type = "hidden";
-    csrfInput.name = "csrfmiddlewaretoken";
-    csrfInput.value = csrftoken;
-    tempForm.appendChild(csrfInput);
-
-    /* Employee ID */
-    const empField = document.createElement("input");
-    empField.type = "hidden";
-    empField.name = "employee_id";
-    empField.value = employeeId;
-    tempForm.appendChild(empField);
-
-    /* Password */
-    const passField = document.createElement("input");
-    passField.type = "hidden";
-    passField.name = firstLogin ? "new_password" : "password";
-    passField.value = password;
-    tempForm.appendChild(passField);
-
-    /* Confirm password */
-    if (firstLogin) {
-        const confField = document.createElement("input");
-        confField.type = "hidden";
-        confField.name = "confirm_password";
-        confField.value = confirmPass;
-        tempForm.appendChild(confField);
-    }
-
-    /* NEXT parameter */
-    if (nextUrl) {
-        const nextField = document.createElement("input");
-        nextField.type = "hidden";
-        nextField.name = "next";
-        nextField.value = nextUrl;
-        tempForm.appendChild(nextField);
-    }
-
-    document.body.appendChild(tempForm);
-    tempForm.submit();
-});
-
-/* =========================
-   PASSWORD TOGGLE
-========================= */
-document.getElementById("toggle-password").addEventListener("click", () => {
-    if (passwordInput.type === "password") {
+  <script>
+    // Password toggle
+    const passwordInput = document.getElementById("password");
+    document.getElementById("toggle-password").addEventListener("click", () => {
+      if (passwordInput.type === "password") {
         passwordInput.type = "text";
-        document.querySelector("#toggle-password i").classList.replace("fa-eye","fa-eye-slash");
-    } else {
+        document.querySelector("#toggle-password i").classList.replace("fa-eye", "fa-eye-slash");
+      } else {
         passwordInput.type = "password";
-        document.querySelector("#toggle-password i").classList.replace("fa-eye-slash","fa-eye");
+        document.querySelector("#toggle-password i").classList.replace("fa-eye-slash", "fa-eye");
+      }
+    });
+
+    // Dark/Light toggle
+    const themeToggle = document.getElementById("theme-toggle");
+    themeToggle.addEventListener("click", () => {
+      document.documentElement.classList.toggle("dark");
+      localStorage.setItem("theme", document.documentElement.classList.contains("dark") ? "dark" : "light");
+    });
+
+    // Apply saved theme
+    if (localStorage.getItem("theme") === "dark") {
+      document.documentElement.classList.add("dark");
     }
-});
-
-/* =========================
-   THEME TOGGLE
-========================= */
-document.getElementById("theme-toggle").addEventListener("click", () => {
-    const html = document.documentElement;
-    html.classList.toggle("dark");
-    localStorage.setItem("theme", html.classList.contains("dark") ? "dark" : "light");
-});
-
-/* Apply saved theme */
-if (localStorage.getItem("theme") === "dark") {
-    document.documentElement.classList.add("dark");
-}
-</script>
-
+  </script>
 </body>
 </html>

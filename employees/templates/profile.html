@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,9 +14,9 @@
       theme: {
         extend: {
           colors: {
-            primary: '#1e40af',       // Dark Blue
-            secondary: '#2563eb',     // Lighter Blue
-            accent: '#3b82f6',        // Highlight
+            primary: '#1e40af',
+            secondary: '#2563eb',
+            accent: '#3b82f6',
           },
         }
       }
@@ -23,17 +24,17 @@
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-500">
+<body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-white transition-colors duration-500">
 
-  <!-- Include your sidebar & topbar -->
+
   {% include 'sideandtopbar.html' %}
 
   <div class="max-w-5xl mx-auto p-6 mt-20 space-y-6">
 
-    <!-- Profile Card -->
-    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-6 animate-fadeIn transition duration-500">
+    <!-- ==================== Read Mode ==================== -->
+    <div id="read-mode" class="bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-6 animate-fadeIn">
       <div class="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">
-        
+
         <!-- Avatar -->
         <div class="flex-shrink-0">
           {% if profile.avatar %}
@@ -49,48 +50,119 @@
         <div class="flex-1 space-y-2">
           <h2 class="text-3xl font-bold">{{ employee.full_name }}</h2>
           <p class="text-gray-500 dark:text-gray-300">{{ profile.role|default:"Employee" }}</p>
-          
+
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 text-gray-700 dark:text-gray-300">
             <div><span class="font-semibold">Employee ID:</span> {{ employee.employee_id }}</div>
             <div><span class="font-semibold">Phone:</span> {{ employee.phone }}</div>
             <div><span class="font-semibold">Department:</span> {{ profile.department|default:"-" }}</div>
             <div><span class="font-semibold">Designation:</span> {{ profile.designation|default:"-" }}</div>
-            <div><span class="font-semibold">Joining Date:</span> {{ profile.joining_date|date:"d M Y"|default:"-" }}</div>
+            <div><span class="font-semibold">Joining Date:</span> {{ profile.joining_date|date:'Y-m-d'|default:"-" }}</div>
             <div><span class="font-semibold">Emergency Contact:</span> {{ profile.emergency_contact|default:"-" }}</div>
             <div><span class="font-semibold">Tenure:</span> {{ profile.tenure_years }} year(s)</div>
-            <div><span class="font-semibold">Address:</span> {{ profile.address|default:"-" }}</div>
+            <div class="sm:col-span-2"><span class="font-semibold">Address:</span> {{ profile.address|default:"-" }}</div>
           </div>
 
-          <!-- Action Buttons -->
-          <div class="mt-6 flex flex-wrap gap-4">
-            <a href="{% url 'employees:edit_profile' %}" class="px-4 py-2 bg-primary text-white rounded-lg shadow hover:bg-secondary transition">
+          <!-- Edit Button -->
+          <div class="mt-6">
+            <button id="edit-btn" class="px-6 py-2 bg-primary text-white rounded-lg shadow hover:bg-secondary transition">
               <i class="fas fa-edit mr-2"></i> Edit Profile
-            </a>
-            <a href="{% url 'employees:dashboard' %}" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition">
-              <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
-            </a>
+            </button>
           </div>
         </div>
-
       </div>
     </div>
 
+    <!-- ==================== Edit Mode ==================== -->
+    <form id="edit-mode" method="POST" enctype="multipart/form-data" class="bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-6 hidden animate-fadeIn">
+      {% csrf_token %}
+      <div class="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">
+
+        <!-- Avatar -->
+        <div class="flex-shrink-0">
+          {% if profile.avatar %}
+          <img src="{{ profile.avatar.url }}" alt="Avatar" class="w-32 h-32 rounded-full object-cover border-4 border-primary">
+          {% else %}
+          <div class="w-32 h-32 rounded-full bg-primary flex items-center justify-center text-white text-4xl font-bold">
+            {{ profile.initials }}
+          </div>
+          {% endif %}
+          <input type="file" name="avatar" class="mt-2 w-full text-gray-900 dark:text-white dark:bg-gray-700" accept="image/*" />
+        </div>
+
+        <!-- Editable Fields -->
+        <div class="flex-1 space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="font-semibold">Full Name:</label>
+              <input type="text" name="full_name" value="{{ employee.full_name }}" class="w-full rounded border px-2 py-1 text-gray-900 dark:text-white dark:bg-gray-700" />
+            </div>
+            <div>
+              <label class="font-semibold">Phone:</label>
+              <input type="text" name="phone" value="{{ employee.phone }}" class="w-full rounded border px-2 py-1 text-gray-900 dark:text-white dark:bg-gray-700" />
+            </div>
+            <div>
+              <label class="font-semibold">Role:</label>
+              <input type="text" name="role" value="{{ profile.role|default:'Employee' }}" class="w-full rounded border px-2 py-1 text-gray-900 dark:text-white dark:bg-gray-700" />
+            </div>
+            <div>
+              <label class="font-semibold">Department:</label>
+              <input type="text" name="department" value="{{ profile.department|default:'' }}" class="w-full rounded border px-2 py-1 text-gray-900 dark:text-white dark:bg-gray-700" />
+            </div>
+            <div>
+              <label class="font-semibold">Designation:</label>
+              <input type="text" name="designation" value="{{ profile.designation|default:'' }}" class="w-full rounded border px-2 py-1 text-gray-900 dark:text-white dark:bg-gray-700" />
+            </div>
+            <div>
+              <label class="font-semibold">Joining Date:</label>
+              <input type="date" name="joining_date" value="{{ profile.joining_date|date:'Y-m-d' }}" class="w-full rounded border px-2 py-1 text-gray-900 dark:text-white dark:bg-gray-700" />
+            </div>
+            <div>
+              <label class="font-semibold">Emergency Contact:</label>
+              <input type="text" name="emergency_contact" value="{{ profile.emergency_contact|default:'' }}" class="w-full rounded border px-2 py-1 text-gray-900 dark:text-white dark:bg-gray-700" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="font-semibold">Address:</label>
+              <textarea name="address" class="w-full rounded border px-2 py-1 text-gray-900 dark:text-white dark:bg-gray-700">{{ profile.address|default:'' }}</textarea>
+            </div>
+          </div>
+
+          <!-- Save & Cancel Buttons -->
+          <div class="mt-6 flex space-x-4">
+            <button type="submit" class="px-6 py-2 bg-primary text-white rounded-lg shadow hover:bg-secondary transition">
+              <i class="fas fa-save mr-2"></i> Save
+            </button>
+            <button type="button" id="cancel-btn" class="px-6 py-2 bg-gray-400 text-white rounded-lg shadow hover:bg-gray-500 transition">
+              Cancel
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </form>
   </div>
 
-  <!-- Fade-in Animation -->
   <style>
     .animate-fadeIn { opacity: 0; animation: fadeIn 0.7s forwards; }
     @keyframes fadeIn { to { opacity: 1; } }
   </style>
 
-  <!-- Dark/Light Toggle Script -->
   <script>
-    const themeToggle = document.getElementById("theme-toggle");
-    if(themeToggle){
-      themeToggle.addEventListener("click", () => {
-        document.documentElement.classList.toggle("dark");
-      });
-    }
+    const editBtn = document.getElementById("edit-btn");
+    const cancelBtn = document.getElementById("cancel-btn");
+    const readMode = document.getElementById("read-mode");
+    const editMode = document.getElementById("edit-mode");
+
+    // Show edit mode
+    editBtn.addEventListener("click", () => {
+      readMode.classList.add("hidden");
+      editMode.classList.remove("hidden");
+    });
+
+    // Cancel edit
+    cancelBtn.addEventListener("click", () => {
+      editMode.classList.add("hidden");
+      readMode.classList.remove("hidden");
+    });
   </script>
 
 </body>

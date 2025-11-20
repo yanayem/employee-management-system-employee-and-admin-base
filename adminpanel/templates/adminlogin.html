@@ -5,32 +5,60 @@
     <meta charset="UTF-8">
     <title>Admin Login</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      // Enable Tailwind class-based dark mode
-      tailwind.config = { darkMode: "class" };
-    </script>
-    <style>
-        /* Tailwind dark mode configuration */
-        html.light { --tw-bg-opacity: 1; }
-        html.dark { --tw-bg-opacity: 1; }
-    </style>
-</head>
-<body class="bg-gray-100 dark:bg-gray-900 flex items-center justify-center min-h-screen transition-colors duration-300">
+    <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: "class" };</script>
 
-<div class="w-full max-w-md bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200">Admin Panel</h1>
-        <button id="theme-toggle" class="text-gray-600 dark:text-gray-300 focus:outline-none">
-            <!-- Icon -->
-            <svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
-                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M12 3v1m0 16v1m8.66-10h-1M4.34 12h-1m15.36 5.36l-.7-.7M6.34 6.34l-.7-.7M17.66 6.34l-.7.7M6.34 17.66l-.7.7M12 5a7 7 0 100 14 7 7 0 000-14z"/>
-            </svg>
-        </button>
-    </div>
+  <!-- Font Awesome -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    /* Custom Theme Variables */
+    :root {
+      --bg-primary: #f9fafb;
+      --bg-secondary: #ffffff;
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --border-color: #e5e7eb;
+    }
+
+    .dark {
+      --bg-primary: #1f2937;
+      --bg-secondary: #111827;
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --border-color: #374151;
+    }
+
+    .theme-bg-primary { background-color: var(--bg-primary); }
+    .theme-bg-secondary { background-color: var(--bg-secondary); }
+    .theme-text-primary { color: var(--text-primary); }
+    .theme-text-secondary { color: var(--text-secondary); }
+    .theme-border { border-color: var(--border-color); }
+  </style>
+</head>
+
+<body class="theme-bg-primary min-h-screen flex items-center justify-center p-4 transition-colors duration-300">
+
+  <!-- Dark/Light Toggle -->
+  <div class="absolute top-4 right-4">
+    <button id="theme-toggle" class="bg-gray-200 dark:bg-gray-700 p-2 rounded-full">
+      <i id="theme-icon" class="fas fa-moon text-gray-800 dark:text-gray-200"></i>
+    </button>
+  </div>
+
+  <div class="max-w-md w-full">
+    <div class="theme-bg-secondary rounded-2xl shadow-2xl p-8 theme-border border transition-colors duration-300">
+
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <div class="w-20 h-20 bg-gradient-to-br from-red-500 to-red-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-user-shield text-white text-2xl"></i>
+        </div>
+        <h1 class="text-3xl font-bold theme-text-primary mb-2">Managely</h1>
+        <p id="login-subtitle" class="theme-text-secondary">Admin Portal Login</p>
+      </div>
 
     {% if form.errors %}
         <p class="text-red-500 text-sm mb-4 text-center">Invalid username or password.</p>
@@ -46,8 +74,12 @@
             <label for="{{ form.password.id_for_label }}" class="block text-gray-700 dark:text-gray-300 font-semibold mb-1">Password</label>
             {{ form.password }}
         </div>
-        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition duration-200">
+        <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition duration-200">
             Login
+        </button>
+        <button type="button" onclick="window.location.href='/'"
+                class="w-full mt-2 border theme-border theme-text-primary py-3 rounded-lg font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+          Back to Portal Selection
         </button>
     </form>
 </div>

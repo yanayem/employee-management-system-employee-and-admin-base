@@ -11,8 +11,7 @@ urlpatterns = [
     path('performance/', views.performance_view, name='performance'),
     path('projects/', views.projects_view, name='projects'),
     path('projects/<int:pk>/', views.project_detail_view, name='project_detail'),
-    path('documents/', views.documents_view, name='documents'),
+   # path('documents/', views.documents_view, name='documents'),
     path('profile/', views.profile_view, name='profile'),
-    path("profile/edit/", views.edit_profile, name="edit_profile"),
-    path('support/', views.support, name='support'),
+    #path('support/', views.support, name='support'),
 ]

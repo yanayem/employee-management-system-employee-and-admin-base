@@ -7,10 +7,10 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     # Optional: Django default admin at /adminportal/
-    path('adminportal/', admin.site.urls),  # <-- NO include(), just admin.site.urls
+    path('admin/', admin.site.urls),  # <-- NO include(), just admin.site.urls
 
     # Custom admin dashboard and logout
-    path('admin/', include('adminpanel.urls')),
+    path('adminportal/', include('adminpanel.urls')),
 
     # Other app URLs
     path('', views.home, name='home'),
