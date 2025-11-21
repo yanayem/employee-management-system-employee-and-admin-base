@@ -14,12 +14,6 @@ git clone https://github.com/yanayem/employee-management-system-employee-and-adm
 cd employee-management-system-employee-and-admin-base
 ```
 
-2. **Create virtual environment**
-```bash
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
-```
 
 3. **Install dependencies**
 ```bash
@@ -35,17 +29,6 @@ python manage.py migrate
 5. **Create superuser**
 ```bash
 python manage.py createsuperuser
-```
-
-6. **Environment variables**  
-Create a `.env` file with:
-```
-SECRET_KEY=your_secret_key
-DEBUG=True
-DATABASE_URL=mysql://username:password@localhost:3306/dbname
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
 ```
 
 ---
@@ -71,8 +54,7 @@ python manage.py runserver
 ## Dependencies
 
 - Django 4.2, Django REST Framework  
-- Channels, Daphne  
-- MySQL (`mysqlclient`)  
+- Channels, Daphne   
 - Cloudinary (`django-cloudinary-storage`)  
 - Gunicorn, Waitress  
 - NumPy, SciPy, scikit-learn  
