@@ -21,7 +21,7 @@
   {% include 'sideandtopbar.html' %}
 
   <!-- Main content -->
-  <div class="flex-1 flex flex-col min-h-screen ml-0 md:ml-64 transition-all duration-300">
+  <div class="flex-1 flex flex-col min-h-screen ml-0 md:ml-64 mt-16 transition-all duration-300">
 
     <!-- Top Navbar -->
     <header class="flex justify-between items-center bg-white dark:bg-gray-800 shadow p-4">
@@ -33,28 +33,14 @@
         </svg>
       </button>
 
-      <h1 class="text-2xl font-bold hidden md:block">Employee Dashboard</h1>
-
-      <div class="flex items-center space-x-4">
-        <button @click="darkMode = !darkMode"
-          class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded">Toggle Dark</button>
-
-        <div class="flex items-center space-x-2">
-          <span>{{ employee.full_name }}</span>
-          {% if profile.avatar %}
-          <img src="{{ profile.avatar.url }}" alt="Avatar" class="w-8 h-8 rounded-full">
-          {% else %}
-          <img src="{% static 'default_avatar.png' %}" alt="Avatar" class="w-8 h-8 rounded-full">
-          {% endif %}
-        </div>
-      </div>
+      <h1 class="text-2xl font-bold hidden md:block dark:text-gray-100">Employee Dashboard</h1>
     </header>
 
     <!-- Dashboard Content -->
-    <main class="p-6 grid grid-cols-1 gap-6">
+    <main class="p-6 grid grid-cols-1 gap-6 dark:bg-gray-900">
 
       <!-- Stats Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 dark:text-gray-100">
         <div class="p-4 bg-white dark:bg-gray-800 rounded shadow flex flex-col items-center">
           <span class="text-lg font-semibold">Attendance</span>
           <span class="text-3xl font-bold">{{ attendance_percent|default:0 }}%</span>
@@ -90,7 +76,7 @@
       </div>
 
       <!-- Project Stats Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-4 dark:text-gray-100">
         {% for stat in project_stats %}
         <div class="p-4 bg-white dark:bg-gray-800 rounded shadow flex flex-col items-center">
           <i class="{{ stat.icon }} text-2xl {{ stat.icon_color }} mb-2"></i>
