@@ -167,6 +167,8 @@ class Project(models.Model):
     due_date = models.DateField()
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default="Medium")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Planning")
+    created_at = models.DateTimeField(auto_now_add=True)   # <--- Add this
+    updated_at = models.DateTimeField(auto_now=True)
 
     def assigned_by_initials(self):
         return "".join([n[0] for n in self.assigned_by.split()][:2])

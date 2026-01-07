@@ -1,12 +1,14 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Sum
+from datetime import datetime, timedelta  # <-- correct import
+from django.db.models import Sum, Q, Count
 from accounts.models import EmployeeProfile
 from .models import (
     Attendance, LeaveRequest, Payroll, Performance, Project, EmployeeData, Document
 )
 from .forms import LeaveRequestForm
+from django.utils.timezone import make_aware
 
 # -------------------------------
 # Helper function
@@ -25,32 +27,68 @@ def get_logged_in_employee(request):
         return None
 
 # ===============================
-# Dashboard
+# DASHBOARD VIEW
 # ===============================
+
+# employees/views.py
+from .models import Document, Payroll
+from django.urls import reverse
+
 def dashboard_view(request):
     employee = get_logged_in_employee(request)
     if not employee:
-        return redirect('accounts:employee_login_page')
+        return redirect("accounts:employee_login_page")
 
     today = timezone.localdate()
 
-    # Attendance stats
-    month_records = Attendance.objects.filter(employee=employee, date__month=today.month)
+    # -----------------------------
+    # Today Attendance
+    # -----------------------------
+    today_record, _ = Attendance.objects.get_or_create(employee=employee, date=today)
+
+    # -----------------------------
+    # Monthly Attendance %
+    # -----------------------------
+    month_records = Attendance.objects.filter(employee=employee, date__month=today.month).order_by('date')
     total_present = month_records.filter(status="Present").count()
+    total_absent = month_records.filter(status="Absent").count()
     late_days = month_records.filter(status="Late").count()
-    total_absent = month_records.count() - total_present - late_days
-    total_absent = max(total_absent, 0)
     attendance_percent = round((total_present / month_records.count()) * 100, 1) if month_records.exists() else 0
 
-    # Week hours
-    week_records = Attendance.objects.filter(employee=employee, date__gte=today - timezone.timedelta(days=7))
+    # -----------------------------
+    # Weekly Attendance % (Last 4 Weeks)
+    # -----------------------------
+    weekly_percentages = []
+    week_labels = []
+    for i in range(3, -1, -1):
+        start_of_week = today - timedelta(days=today.weekday() + i*7)
+        end_of_week = start_of_week + timedelta(days=6)
+        week_records = Attendance.objects.filter(employee=employee, date__gte=start_of_week, date__lte=end_of_week)
+        total_days = week_records.count()
+        present_days = week_records.filter(status="Present").count()
+        percent = round((present_days / total_days) * 100, 1) if total_days else 0
+        weekly_percentages.append(percent)
+        week_labels.append(f"{start_of_week.strftime('%d %b')}")
+
+    # This week % (for card)
+    this_week_records = Attendance.objects.filter(employee=employee, date__gte=today - timedelta(days=today.weekday()))
+    week_present = this_week_records.filter(status="Present").count()
+    week_total_days = this_week_records.count()
+    this_week_percent = round((week_present / week_total_days) * 100, 1) if week_total_days else 0
+
+    # -----------------------------
+    # Weekly Hours
+    # -----------------------------
+    week_records = Attendance.objects.filter(employee=employee, date__gte=today - timedelta(days=7))
     total_week_hours = sum(
         ((timezone.datetime.combine(r.date, r.check_out) - timezone.datetime.combine(r.date, r.check_in)).total_seconds() / 3600)
         for r in week_records if r.check_in and r.check_out
     )
     total_week_hours_formatted = f"{int(total_week_hours)}h {int((total_week_hours*60)%60)}m"
 
-    # Leave balances
+    # -----------------------------
+    # Leave Balances
+    # -----------------------------
     leave_requests = LeaveRequest.objects.filter(employee=employee, status="Approved")
     balances = {
         "Annual": 18 - sum(l.total_days() for l in leave_requests.filter(leave_type="Annual")),
@@ -60,37 +98,97 @@ def dashboard_view(request):
         "Emergency": 5 - sum(l.total_days() for l in leave_requests.filter(leave_type="Emergency")),
     }
 
-    # Payroll
-    payrolls = Payroll.objects.filter(employee=employee).order_by('-month')
-    ytd_earnings = payrolls.aggregate(total_gross=Sum('gross_salary'))['total_gross'] or 0
+    # -----------------------------
+    # Payrolls
+    # -----------------------------
+    payrolls = Payroll.objects.filter(employee=employee).order_by("-month")
+    ytd_earnings = payrolls.aggregate(total_gross=Sum("gross_salary"))["total_gross"] or 0
 
+    # -----------------------------
     # Projects
+    # -----------------------------
     projects = Project.objects.filter(assigned_to=employee)
-    success_rate = round(sum(p.progress for p in projects) / projects.count()) if projects.exists() else 0
+    active_projects = projects.filter(status="In Progress").count()
 
-    project_stats = [
-        {"label": "Active Projects", "value": projects.filter(status="In Progress").count(), "icon": "fas fa-tasks", "icon_color": "text-blue-600"},
-        {"label": "Completed", "value": projects.filter(status="Completed").count(), "icon": "fas fa-check-circle", "icon_color": "text-green-600"},
-        {"label": "Pending Review", "value": projects.filter(status="Review").count(), "icon": "fas fa-clock", "icon_color": "text-yellow-600"},
-        {"label": "Success Rate", "value": success_rate, "icon": "fas fa-percentage", "icon_color": "text-purple-600"},
-    ]
+    # -----------------------------
+    # Performance
+    # -----------------------------
+    performance = Performance.objects.filter(employee=employee).first()
+    skill_labels = []
+    skill_values = []
+    if performance:
+        for ps in performance.skills.all():
+            skill_labels.append(ps.skill.name)
+            skill_values.append(ps.value)
 
+    # -----------------------------
+    # Recent Activity (Leave, Project, Payslip)
+    # -----------------------------
+    recent_activity = []
+
+        # Leaves (created_at should already be aware)
+    for l in leave_requests.order_by("-created_at")[:3]:
+        recent_activity.append({
+            "type": "Leave",
+            "icon": "fa-calendar-check",
+            "title": f"{l.leave_type} Leave",
+            "desc": f"{l.start_date} to {l.end_date}",
+            "status": l.status,
+            "date": timezone.localtime(l.created_at),  # ensure aware
+            "link": None,
+        })
+
+    # Projects (use aware now)
+    for p in projects.order_by("-id")[:3]:
+        recent_activity.append({
+            "type": "Project",
+            "icon": "fa-tasks",
+            "title": p.title,
+            "desc": f"{p.progress}%",
+            "status": p.status,
+            "date": timezone.now(),  # already aware
+            "link": None,
+        })
+
+    # Payslips (convert date to aware datetime)
+    for pay in payrolls[:3]:
+        pay_naive = datetime.combine(pay.month, datetime.min.time())  # naive datetime
+        pay_aware = make_aware(pay_naive)  # convert to aware
+        recent_activity.append({
+            "type": "Payslip",
+            "icon": "fa-file-invoice-dollar",
+            "title": pay.month.strftime("%B %Y"),
+            "desc": "Download Payslip",
+            "status": "Ready",
+            "date": pay_aware,  # aware datetime
+            "link": pay.payslip_file.url if pay.payslip_file else None,
+        })
+
+    # Sort all activities safely
+    recent_activity.sort(key=lambda x: x["date"], reverse=True)
+
+
+    # -----------------------------
+    # Context
+    # -----------------------------
     context = {
         "employee": employee,
+        "today_record": today_record,
         "attendance_percent": attendance_percent,
-        "total_present": total_present,
-        "late_days": late_days,
-        "total_absent": total_absent,
-        "month_records": month_records,
+        "this_week_percent": this_week_percent,
+        "week_labels": week_labels,
+        "weekly_percentages": weekly_percentages,
         "total_week_hours": total_week_hours_formatted,
         "balances": balances,
         "ytd_earnings": ytd_earnings,
         "projects": projects,
-        "project_stats": project_stats,
+        "active_projects": active_projects,
+        "skill_labels": skill_labels,
+        "skill_values": skill_values,
+        "recent_activity": recent_activity,
     }
 
-    return render(request, 'employee_dashboard.html', context)
-
+    return render(request, "employee_dashboard.html", context)
 
 # ===============================
 # Attendance
@@ -101,22 +199,25 @@ def attendance_view(request):
         return redirect('accounts:login')
 
     today = timezone.localdate()
-    attendance, created = Attendance.objects.get_or_create(employee=employee, date=today)
+    
+    # This will be your "today_record"
+    today_record, created = Attendance.objects.get_or_create(employee=employee, date=today)
 
     if request.method == "POST":
         action = request.POST.get("action")
         now = timezone.localtime().time()
 
-        if action == "check_in" and not attendance.check_in:
-            attendance.check_in = now
-            attendance.status = "Present"
-            attendance.save()
-        elif action == "check_out" and not attendance.check_out:
-            attendance.check_out = now
-            attendance.save()
+        if action == "check_in" and not today_record.check_in:
+            today_record.check_in = now
+            today_record.status = "Present"
+            today_record.save()
+        elif action == "check_out" and not today_record.check_out:
+            today_record.check_out = now
+            today_record.save()
 
         return redirect('employees:attendance')
 
+    # Weekly and monthly records
     week_records = Attendance.objects.filter(
         employee=employee,
         date__gte=today - timezone.timedelta(days=7)
@@ -138,7 +239,7 @@ def attendance_view(request):
     )
 
     context = {
-        "attendance": attendance,
+        "today_record": today_record,   # <-- FIX: pass to template
         "week_records": week_records,
         "month_records": month_records,
         "attendance_percent": attendance_percent,
