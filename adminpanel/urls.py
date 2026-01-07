@@ -10,7 +10,7 @@ urlpatterns = [
         next_page='/adminportal/dashboard/'  # fix the redirect URL
     ), name='admin_login'),
     # Dashboard
-    path('dashboard/', views.dashboard, name='admin_dashboard'),
+    path('dashboard/', views.dashboard_view, name='admin_dashboard'),
     # payroll management
     path("payroll/", views.payroll_list, name="admin_payroll"),
     path("payroll/add/", views.payroll_add, name="admin_payroll_add"),

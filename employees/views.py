@@ -193,64 +193,91 @@ def dashboard_view(request):
 # ===============================
 # Attendance
 # ===============================
+from django.shortcuts import render
+from django.utils import timezone
+from employees.models import Attendance, EmployeeProfile
+from django.http import HttpResponse
+from django.shortcuts import render
+from django.utils import timezone
+from employees.models import Attendance
+
+from django.shortcuts import render, redirect
+from django.utils import timezone
+from datetime import datetime, timedelta
+from employees.models import Attendance
+from django.contrib import messages
+
 def attendance_view(request):
+    today = timezone.localdate()
     employee = get_logged_in_employee(request)
     if not employee:
-        return redirect('accounts:login')
+        messages.error(request, "You must be logged in to mark attendance.")
+        return redirect("accounts:employee_login_page")
 
-    today = timezone.localdate()
-    
-    # This will be your "today_record"
-    today_record, created = Attendance.objects.get_or_create(employee=employee, date=today)
-
+    # Handle POST for Check In / Check Out
     if request.method == "POST":
         action = request.POST.get("action")
-        now = timezone.localtime().time()
+        attendance_record, created = Attendance.objects.get_or_create(employee=employee, date=today)
 
-        if action == "check_in" and not today_record.check_in:
-            today_record.check_in = now
-            today_record.status = "Present"
-            today_record.save()
-        elif action == "check_out" and not today_record.check_out:
-            today_record.check_out = now
-            today_record.save()
+        now = timezone.localtime()
+        current_time = now.time()
 
-        return redirect('employees:attendance')
+        if action == "check_in":
+            if not attendance_record.check_in:
+                attendance_record.check_in = current_time
+                # Set status
+                if current_time <= datetime.strptime("09:30:00", "%H:%M:%S").time():
+                    attendance_record.status = "Present"
+                else:
+                    attendance_record.status = "Late"
+                attendance_record.save()
+                messages.success(request, f"Checked in at {current_time.strftime('%H:%M')}")
+            else:
+                messages.warning(request, f"You already checked in at {attendance_record.check_in.strftime('%H:%M')}")
+        elif action == "check_out":
+            if not attendance_record.check_out:
+                attendance_record.check_out = current_time
+                # if check_in not set yet, mark as Late
+                if not attendance_record.check_in:
+                    attendance_record.status = "Late"
+                attendance_record.save()
+                messages.success(request, f"Checked out at {current_time.strftime('%H:%M')}")
+            else:
+                messages.warning(request, f"You already checked out at {attendance_record.check_out.strftime('%H:%M')}")
+        return redirect("employees:attendance")  # redirect to refresh page
 
-    # Weekly and monthly records
-    week_records = Attendance.objects.filter(
-        employee=employee,
-        date__gte=today - timezone.timedelta(days=7)
-    ).order_by('-date')
+    # ==========================
+    # GET: Display attendance
+    # ==========================
+    # Today's record
+    today_record = Attendance.objects.filter(employee=employee, date=today).first()
 
-    month_records = Attendance.objects.filter(
-        employee=employee,
-        date__month=today.month
-    ).order_by('-date')
-
-    total_present = month_records.filter(status="Present").count()
-    late_days = month_records.filter(status="Late").count()
-    attendance_percent = round((total_present / month_records.count()) * 100, 1) if month_records.exists() else 0
-
-    # Total hours worked this week
+    # Weekly data (current week)
+    week_start = today - timedelta(days=today.weekday())
+    week_records = Attendance.objects.filter(employee=employee, date__gte=week_start, date__lte=today)
+    week_days_present = week_records.filter(status='Present').count()
+    week_total_days = week_records.count()
     total_week_hours = sum(
-        ((timezone.datetime.combine(r.date, r.check_out) - timezone.datetime.combine(r.date, r.check_in)).total_seconds() / 3600)
+        ((datetime.combine(r.date, r.check_out) - datetime.combine(r.date, r.check_in)).total_seconds() / 3600)
         for r in week_records if r.check_in and r.check_out
     )
 
+    # Monthly data
+    month_records = Attendance.objects.filter(employee=employee, date__month=today.month, date__year=today.year)
+    late_days = month_records.filter(status='Late').count()
+    attendance_percent = round((month_records.filter(status='Present').count() / month_records.count()) * 100, 1) if month_records.exists() else 0
+
     context = {
-        "today_record": today_record,   # <-- FIX: pass to template
-        "week_records": week_records,
-        "month_records": month_records,
-        "attendance_percent": attendance_percent,
-        "late_days": late_days,
-        "total_week_hours": f"{int(total_week_hours)}h {int((total_week_hours*60)%60)}m",
-        "week_days_present": week_records.filter(status="Present").count(),
-        "week_total_days": week_records.count(),
+        'today_record': today_record,
+        'week_days_present': week_days_present,
+        'week_total_days': week_total_days,
+        'total_week_hours': round(total_week_hours, 2),
+        'attendance_percent': attendance_percent,
+        'late_days': late_days,
+        'month_records': month_records
     }
 
-    return render(request, "attendance.html", context)
-
+    return render(request, 'attendance.html', context)
 
 # ===============================
 # Leave
@@ -365,66 +392,74 @@ def performance_view(request):
     return render(request, "performance.html", context)
 
 
-# ===============================
-# Projects
-# ===============================
+from django.shortcuts import render, redirect
+from django.utils import timezone
+from .models import Project
+from .utils import get_project_status  # if in utils.py
+
 def projects_view(request):
-    # Get the logged-in employee
     employee = get_logged_in_employee(request)
     if not employee:
         return redirect("accounts:login")
 
-    # Fetch projects assigned to this employee
-    employee_projects = Project.objects.filter(assigned_to=employee)
+    projects = Project.objects.filter(assigned_to=employee)
 
-    # Calculate employee-specific success rate
-    if employee_projects.exists():
-        success_rate = round(sum(p.progress for p in employee_projects) / employee_projects.count())
-    else:
-        success_rate = 0
+    # Attach dynamic status to each project
+    for project in projects:
+        status_info = get_project_status(project)
+        project.dynamic_status = status_info["label"]
+        project.status_badge = status_info["badge"]
 
-    # Prepare project stats
+    # Success rate
+    success_rate = (
+        round(sum(p.progress for p in projects) / projects.count())
+        if projects.exists()
+        else 0
+    )
+
     project_stats = [
         {
             "label": "Active Projects",
-            "value": employee_projects.filter(status="In Progress").count(),
+            "value": len([p for p in projects if p.dynamic_status == "In Progress"]),
             "icon": "fas fa-tasks",
             "icon_color": "text-blue-600",
             "icon_bg": "bg-blue-100 dark:bg-blue-900"
         },
         {
             "label": "Completed",
-            "value": employee_projects.filter(status="Completed").count(),
+            "value": len([p for p in projects if p.dynamic_status == "Completed"]),
             "icon": "fas fa-check-circle",
             "icon_color": "text-green-600",
             "icon_bg": "bg-green-100 dark:bg-green-900"
         },
         {
-            "label": "Pending Review",
-            "value": employee_projects.filter(status="Review").count(),
-            "icon": "fas fa-clock",
-            "icon_color": "text-yellow-600",
-            "icon_bg": "bg-yellow-100 dark:bg-yellow-900"
+            "label": "Overdue",
+            "value": len([p for p in projects if p.dynamic_status == "Overdue"]),
+            "icon": "fas fa-exclamation-circle",
+            "icon_color": "text-red-600",
+            "icon_bg": "bg-red-100 dark:bg-red-900"
         },
         {
             "label": "Success Rate",
-            "value": success_rate,
+            "value": f"{success_rate}%",
             "icon": "fas fa-percentage",
             "icon_color": "text-purple-600",
             "icon_bg": "bg-purple-100 dark:bg-purple-900"
         },
     ]
 
-    context = {
-        "projects": employee_projects,
+    return render(request, "projects.html", {
+        "projects": projects,
         "project_stats": project_stats,
-    }
-
-    return render(request, "projects.html", context)
+    })
 
 #--------------------------------
 # Project Detail View
 #--------------------------------
+from datetime import date
+from django.shortcuts import render, redirect
+from .models import Project
+
 def project_detail_view(request, pk):
     employee = get_logged_in_employee(request)
     if not employee:
@@ -433,11 +468,15 @@ def project_detail_view(request, pk):
     try:
         project = Project.objects.get(pk=pk, assigned_to=employee)
     except Project.DoesNotExist:
-        return redirect("employees:projects")  # redirect if project not found
+        return redirect("employees:projects")
+
+    # Ensure progress is max 100
+    project.progress = min(project.progress, 100)
 
     context = {
         "project": project,
-        "assigned_by_initials": "".join([n[0] for n in project.assigned_by.split()][:2]).upper()
+        "assigned_by_initials": "".join([n[0] for n in project.assigned_by.split()][:2]).upper(),
+        "today": date.today(),
     }
 
     return render(request, "project_detail.html", context)
@@ -448,26 +487,100 @@ def project_detail_view(request, pk):
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from .models import EmployeeData
-  # your custom login check
-
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import EmployeeProfile
+@login_required
 def profile_view(request):
+    # Get the employee profile from session using your helper
     employee = get_logged_in_employee(request)
-    profile, _ = EmployeeData.objects.get_or_create(employee=employee)
+    if not employee:
+        return redirect("accounts:employee_login_page")
+
+    profile = employee
 
     if request.method == "POST":
-        # Update only the fields from the form
-        profile.designation = request.POST.get("designation", profile.designation)
-        profile.department = request.POST.get("department", profile.department)
-        joining_date = request.POST.get("joining_date")
-        if joining_date:
-            profile.joining_date = joining_date
-        profile.address = request.POST.get("address", profile.address)
-        profile.emergency_contact = request.POST.get("emergency_contact", profile.emergency_contact)
-        profile.role = request.POST.get("role", profile.role)
-        if request.FILES.get("avatar"):
-            profile.avatar = request.FILES["avatar"]
-        profile.save()
-        messages.success(request, "Profile updated successfully!")
-        return redirect("employees:profile")
+        # --- 1. Security / Password Change ---
+        if "new_password" in request.POST:
+            new_password = request.POST.get("new_password")
+            confirm_password = request.POST.get("confirm_password")
+            if new_password and new_password == confirm_password:
+                profile.password = new_password  # Note: Use make_password() in production
+                profile.save()
+                messages.success(request, "Password changed successfully!")
+            else:
+                messages.error(request, "Passwords do not match!")
+            return redirect("employees:profile")
 
-    return render(request, "profile.html", {"employee": employee, "profile": profile})
+        # --- 2. Emergency Info Update ---
+        elif "emergency_name" in request.POST:
+            profile.emergency_name = request.POST.get("emergency_name")
+            profile.emergency_relation = request.POST.get("emergency_relation")
+            profile.emergency_contact = request.POST.get("emergency_contact")
+            profile.emergency_address = request.POST.get("emergency_address")
+            profile.save()
+            messages.success(request, "Emergency info updated!")
+            return redirect("employees:profile")
+
+        # --- 3. General Profile & Avatar Update ---
+        else:
+            # Update text fields
+            profile.full_name = request.POST.get("full_name", profile.full_name)
+            profile.phone = request.POST.get("phone", profile.phone)
+            profile.department = request.POST.get("department", profile.department)
+            profile.designation = request.POST.get("designation", profile.designation)
+            profile.role = request.POST.get("role", profile.role)
+            profile.gender = request.POST.get("gender", profile.gender)
+            
+            joining_date = request.POST.get("joining_date")
+            if joining_date:
+                profile.joining_date = joining_date
+            profile.address = request.POST.get("address", profile.address)
+
+            # --- Avatar Logic: The "Auto Save" Part ---
+            # If a new file is uploaded via the camera button
+            if request.FILES.get("avatar"):
+                profile.avatar = request.FILES["avatar"]
+            
+            # If the delete button was clicked (it sends 'on' or '1' via the checkbox)
+            elif request.POST.get("remove_avatar") in ["1", "on"]:
+                if profile.avatar:
+                    profile.avatar.delete(save=False) # Physically delete the old file
+                profile.avatar = None
+
+            profile.save()
+            messages.success(request, "Profile updated successfully!")
+            return redirect("employees:profile")
+
+    return render(request, "profile.html", {"profile": profile})
+
+from django.shortcuts import render
+from django.utils import timezone
+from datetime import timedelta, datetime
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def base_notifications(request):
+    """
+    Prepare notifications for the topbar dropdown.
+    No separate page is needed.
+    """
+    # Example: dynamic notifications (replace with your DB queries)
+    notifications = [
+        {"title": "New Task Assigned", "message": "You have a new task.", "link": "#", "timestamp": timezone.now() - timedelta(minutes=5), "is_read": False},
+        {"title": "Leave Approved", "message": "Your leave request approved.", "link": "#", "timestamp": timezone.now() - timedelta(hours=2), "is_read": True},
+        {"title": "Payroll Credited", "message": "Salary credited for January.", "link": "#", "timestamp": timezone.now() - timedelta(days=1), "is_read": False},
+        # Add more dynamic notifications here...
+    ]
+
+    # Keep only latest 20
+    notifications = sorted(notifications, key=lambda n: n["timestamp"], reverse=True)[:20]
+
+    # Unread count
+    unread_count = sum(1 for n in notifications if not n["is_read"])
+
+    return {
+        "notifications": notifications,
+        "unread_count": unread_count,
+    }

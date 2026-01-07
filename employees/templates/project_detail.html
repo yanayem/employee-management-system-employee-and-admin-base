@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ project.title }} | Project Details</title>
-  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -19,13 +20,14 @@
       }
     }
   </script>
+
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-500">
 
   <!-- Topbar -->
   <header class="fixed top-0 left-0 w-full bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between z-50 transition-colors duration-300">
-    <!-- Left: Logo/Title -->
     <div class="flex items-center space-x-3">
       <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center">
         <i class="fas fa-user-tie text-white"></i>
@@ -36,13 +38,14 @@
       </div>
     </div>
 
-    <!-- Right: Profile + Toggle -->
-    <div class="flex items-center space-x-4">
-      <span class="font-semibold">{{ employee.full_name }}</span>
-      <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
-        <i class="fas fa-moon text-gray-700 dark:text-gray-200"></i>
-      </button>
-    </div>
+    <!-- Topbar Dark/Light Toggle -->
+<div class="flex items-center space-x-4">
+  <span class="font-semibold">{{ employee.full_name }}</span>
+  <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition flex items-center justify-center">
+    <!-- Moon icon (shown by default) -->
+    <i id="theme-icon" class="fas fa-moon text-gray-700 dark:text-gray-200"></i>
+  </button>
+</div>
   </header>
 
   <!-- Main content -->
@@ -57,10 +60,12 @@
 
     <!-- Project Card -->
     <div class="bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-6 animate-fadeIn transition duration-500">
+
+      <!-- Title & Description -->
       <h2 class="text-3xl font-bold mb-2 text-gray-900 dark:text-white">{{ project.title }}</h2>
       <p class="text-gray-600 dark:text-gray-300 mb-4">{{ project.description }}</p>
 
-      <!-- Stats -->
+      <!-- Project Stats -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
         <!-- Progress -->
         <div>
@@ -81,9 +86,9 @@
         <div>
           <p class="text-sm text-gray-500 mb-1">Priority</p>
           <span class="px-3 py-1 rounded-full font-semibold
-            {% if project.priority == 'High' %}bg-red-200 text-red-800
-            {% elif project.priority == 'Medium' %}bg-yellow-200 text-yellow-800
-            {% else %}bg-green-200 text-green-800{% endif %}">
+            {% if project.priority == 'High' %}bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-200
+            {% elif project.priority == 'Medium' %}bg-yellow-200 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
+            {% else %}bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-200{% endif %}">
             {{ project.priority }}
           </span>
         </div>
@@ -94,27 +99,65 @@
         <span class="px-3 py-1 bg-green-500 text-white font-semibold rounded-full">{{ assigned_by_initials }}</span>
         <p class="text-gray-500 dark:text-gray-400">Assigned by {{ project.assigned_by }}</p>
       </div>
+
+      <!-- Status -->
+      <div class="mt-4">
+        {% if project.status == "Completed" %}
+          <span class="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 font-semibold rounded-full">Completed</span>
+        {% elif project.status == "Review" %}
+          <span class="px-3 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 font-semibold rounded-full">Review</span>
+        {% elif project.status in "Planning,In Progress" %}
+          {% if project.due_date >= today %}
+            <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 font-semibold rounded-full">Active</span>
+          {% else %}
+            <span class="px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 font-semibold rounded-full">Overdue</span>
+          {% endif %}
+        {% else %}
+          <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold rounded-full">Unknown</span>
+        {% endif %}
+      </div>
+
     </div>
   </main>
 
   <!-- Tailwind Animations -->
   <style>
-    .animate-fadeIn {
-      opacity: 0;
-      animation: fadeIn 0.7s forwards;
-    }
-    @keyframes fadeIn {
-      to { opacity: 1; }
-    }
+    .animate-fadeIn { opacity: 0; animation: fadeIn 0.7s forwards; }
+    @keyframes fadeIn { to { opacity: 1; } }
   </style>
 
-  <!-- Dark/Light Toggle Script -->
-  <script>
-    const themeToggle = document.getElementById("theme-toggle");
-    themeToggle.addEventListener("click", () => {
-      document.documentElement.classList.toggle("dark");
-    });
-  </script>
+  <!-- Dark/Light Toggle -->
+<script>
+  const themeToggle = document.getElementById("theme-toggle");
+  const themeIcon = document.getElementById("theme-icon");
+  const html = document.documentElement;
+
+  // Check localStorage for theme on page load
+  const storedTheme = localStorage.getItem("theme");
+  if(storedTheme === "dark"){
+    html.classList.add("dark");
+    themeIcon.classList.remove("fa-moon");
+    themeIcon.classList.add("fa-sun");
+  } else {
+    html.classList.remove("dark");
+    themeIcon.classList.remove("fa-sun");
+    themeIcon.classList.add("fa-moon");
+  }
+
+  // Toggle theme on click
+  themeToggle.addEventListener("click", () => {
+    html.classList.toggle("dark");
+    if(html.classList.contains("dark")){
+      localStorage.setItem("theme", "dark");
+      themeIcon.classList.remove("fa-moon");
+      themeIcon.classList.add("fa-sun");
+    } else {
+      localStorage.setItem("theme", "light");
+      themeIcon.classList.remove("fa-sun");
+      themeIcon.classList.add("fa-moon");
+    }
+  });
+</script>
 
 </body>
 </html>

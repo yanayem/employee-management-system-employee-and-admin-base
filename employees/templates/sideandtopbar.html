@@ -1,229 +1,183 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Employee Portal | Managely</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Employee Portal | Managely</title>
 
-    <!-- Theme CSS -->
-    <link rel="stylesheet" href="{% static 'css/theme.css' %}" />
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}" />
 
-    <!-- Tailwind -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: "class",
-      };
-    </script>
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: "class" };
+  </script>
 
-    <!-- Font Awesome -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-    />
-  </head>
+  <!-- Font Awesome -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  />
+</head>
 
-  <body
-    class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300"
-  >
-    <!-- ================= TOPBAR ================= -->
-    <header
-      class="fixed top-0 left-0 right-0 h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6 z-50"
-    >
-      <!-- Left -->
-      <div class="flex items-center gap-4">
-        <button
-          id="sidebar-toggle"
-          class="md:hidden text-gray-700 dark:text-gray-200"
-        >
-          <i class="fas fa-bars text-xl"></i>
-        </button>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
 
-        <div class="flex items-center gap-3">
-          <div
-            class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center"
-          >
-            <i class="fas fa-user-shield text-white"></i>
-          </div>
-          <div>
-            <h1 class="text-xl font-bold">Managely</h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400">
-              Employee Portal
-            </p>
-          </div>
+  <!-- ================= TOPBAR ================= -->
+  <header class="fixed top-0 left-0 right-0 h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6 z-50">
+    
+    <!-- Left: Logo & Sidebar toggle -->
+    <div class="flex items-center gap-4">
+      <button id="sidebar-toggle" class="md:hidden text-gray-700 dark:text-gray-200">
+        <i class="fas fa-bars text-xl"></i>
+      </button>
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center">
+          <i class="fas fa-user-shield text-white"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold">Managely</h1>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Employee Portal</p>
         </div>
       </div>
+    </div>
 
-      <!-- Right -->
-      <div class="flex items-center gap-4">
-        <!-- Notification -->
-        <button class="relative">
+    <!-- Right: Notifications, Theme, Profile -->
+    <div class="flex items-center gap-4">
+
+      <!-- Notification Dropdown -->
+      <div class="relative">
+        <button id="notification-btn" class="relative focus:outline-none">
           <i class="fas fa-bell text-xl"></i>
-          <span
-            class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
-          ></span>
+          {% if unread_count > 0 %}
+            <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center font-bold animate-pulse">
+                {{ unread_count }}
+            </span>
+          {% endif %}
         </button>
 
-        <!-- Theme Toggle -->
-        <button id="theme-toggle">
-          <i id="theme-icon" class="fas fa-moon text-xl"></i>
-        </button>
-
-        <!-- Profile -->
-        <div class="relative">
-          <button
-            id="profile-dropdown-btn"
-            class="flex items-center gap-3"
-          >
-            <div
-              class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold"
-            >
-              {{ employee.full_name|slice:":2"|upper }}
-            </div>
-            <div class="hidden md:block text-left">
-              <p class="font-semibold">{{ employee.full_name }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                {{ profile.designation|default:"-" }}
-              </p>
-            </div>
-            <i class="fas fa-chevron-down text-sm"></i>
-          </button>
-
-          <div
-            id="profile-dropdown"
-            class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2"
-          >
-            <a
-              href="{% url 'employees:profile' %}"
-              class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              <i class="fas fa-user mr-2"></i> Profile
-            </a>
-            <a
-              href="#"
-              class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              <i class="fas fa-cog mr-2"></i> Settings
-            </a>
-            <hr class="my-2 border-gray-200 dark:border-gray-700" />
-            <a
-              href="{% url 'accounts:logout' %}"
-              class="block px-4 py-2 text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              <i class="fas fa-sign-out-alt mr-2"></i> Logout
-            </a>
+        <div id="notification-panel" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
+          <div class="p-4 border-b font-bold text-gray-800 dark:text-gray-100">
+            Notifications
+          </div>
+          <div class="max-h-60 overflow-y-auto">
+            {% if notifications %}
+              {% for note in notifications %}
+                <a href="{{ note.link }}" class="block px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                  <p class="text-sm font-medium text-gray-800 dark:text-gray-100">{{ note.title }}</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">{{ note.message }}</p>
+                  <span class="text-xs text-gray-400 dark:text-gray-500">{{ note.timestamp|timesince }} ago</span>
+                </a>
+              {% endfor %}
+            {% else %}
+              <p class="text-center text-gray-500 dark:text-gray-400 py-4">No notifications</p>
+            {% endif %}
           </div>
         </div>
       </div>
-    </header>
 
-    <!-- ================= SIDEBAR ================= -->
-    <aside
-      id="sidebar"
-      class="fixed top-16 left-0 w-64 bg-white dark:bg-gray-800 min-h-screen transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-40"
-    >
-      <nav class="p-6">
-        <ul class="space-y-2">
-          <li>
-            <a
-              href="{% url 'employees:dashboard' %}"
-              class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
-            >
-              <i class="fas fa-tachometer-alt w-5 mr-3"></i> Dashboard
-            </a>
-          </li>
+      <!-- Theme Toggle -->
+      <button id="theme-toggle">
+        <i id="theme-icon" class="fas fa-moon text-xl"></i>
+      </button>
 
-          <li>
-            <a
-              href="{% url 'employees:attendance' %}"
-              class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
-            >
-              <i class="fas fa-clock w-5 mr-3"></i> Attendance
-            </a>
-          </li>
+      <!-- Profile Dropdown -->
+      <div class="relative">
+        <button id="profile-dropdown-btn" class="flex items-center gap-3">
+          {% if global_profile.avatar and global_profile.avatar.name %}
+            <img src="{{ global_profile.avatar.url }}" alt="Avatar" class="w-10 h-10 rounded-full border-2 border-primary object-cover">
+          {% else %}
+            <img src="https://i.pravatar.cc/150?img=10" alt="Avatar" class="w-10 h-10 rounded-full border-2 border-primary object-cover">
+          {% endif %}
+          <div class="hidden md:block text-left">
+            <p class="font-semibold">{{ global_profile.full_name|default:"User" }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">{{ global_profile.designation|default:"Employee" }}</p>
+          </div>
+          <i class="fas fa-chevron-down text-sm"></i>
+        </button>
 
-          <li>
-            <a
-              href="{% url 'employees:leave' %}"
-              class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
-            >
-              <i class="fas fa-calendar-times w-5 mr-3"></i> Leave
-            </a>
-          </li>
+        <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2">
+          <a href="{% url 'employees:profile' %}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fas fa-user mr-2"></i> Profile</a>
+          <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fas fa-cog mr-2"></i> Settings</a>
+          <hr class="my-2 border-gray-200 dark:border-gray-700" />
+          <a href="{% url 'accounts:logout' %}" class="block px-4 py-2 text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fas fa-sign-out-alt mr-2"></i> Logout</a>
+        </div>
+      </div>
 
-          <li>
-            <a
-              href="{% url 'employees:payroll' %}"
-              class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
-            >
-              <i class="fas fa-money-bill-wave w-5 mr-3"></i> Payroll
-            </a>
-          </li>
+    </div>
+  </header>
 
-          <li>
-            <a
-              href="{% url 'employees:performance' %}"
-              class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
-            >
-              <i class="fas fa-chart-line w-5 mr-3"></i> Performance
-            </a>
-          </li>
+  <!-- ================= SIDEBAR ================= -->
+  <aside id="sidebar" class="fixed top-16 left-0 w-64 bg-white dark:bg-gray-800 min-h-screen transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-40">
+    <nav class="p-6">
+      <ul class="space-y-2">
+        <li><a href="{% url 'employees:dashboard' %}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"><i class="fas fa-tachometer-alt w-5 mr-3"></i> Dashboard</a></li>
+        <li><a href="{% url 'employees:attendance' %}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"><i class="fas fa-clock w-5 mr-3"></i> Attendance</a></li>
+        <li><a href="{% url 'employees:leave' %}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"><i class="fas fa-calendar-times w-5 mr-3"></i> Leave</a></li>
+        <li><a href="{% url 'employees:payroll' %}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"><i class="fas fa-money-bill-wave w-5 mr-3"></i> Payroll</a></li>
+        <li><a href="{% url 'employees:performance' %}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"><i class="fas fa-chart-line w-5 mr-3"></i> Performance</a></li>
+        <li><a href="{% url 'employees:projects' %}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"><i class="fas fa-project-diagram w-5 mr-3"></i> Projects</a></li>
+      </ul>
+    </nav>
+  </aside>
 
-          <li>
-            <a
-              href="{% url 'employees:projects' %}"
-              class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
-            >
-              <i class="fas fa-project-diagram w-5 mr-3"></i> Projects
-            </a>
-          </li>
-        </ul>
-      </nav>
-    </aside>
+  <!-- ================= SCRIPTS ================= -->
+  <script>
+    const html = document.documentElement;
+    const themeToggle = document.getElementById("theme-toggle");
+    const themeIcon = document.getElementById("theme-icon");
+    const sidebarToggle = document.getElementById("sidebar-toggle");
+    const sidebar = document.getElementById("sidebar");
+    const profileBtn = document.getElementById("profile-dropdown-btn");
+    const profileDropdown = document.getElementById("profile-dropdown");
+    const notifBtn = document.getElementById("notification-btn");
+    const notifPanel = document.getElementById("notification-panel");
 
-    <!-- ================= SCRIPTS ================= -->
-    <script>
-      const html = document.documentElement;
-      const themeToggle = document.getElementById("theme-toggle");
-      const themeIcon = document.getElementById("theme-icon");
-      const sidebarToggle = document.getElementById("sidebar-toggle");
-      const sidebar = document.getElementById("sidebar");
-      const profileBtn = document.getElementById("profile-dropdown-btn");
-      const profileDropdown = document.getElementById("profile-dropdown");
+    // Load theme
+    if (localStorage.getItem("theme") === "dark") {
+      html.classList.add("dark");
+      themeIcon.classList.replace("fa-moon", "fa-sun");
+    }
 
-      // Load theme
-      if (localStorage.getItem("theme") === "dark") {
-        html.classList.add("dark");
+    // Theme toggle
+    themeToggle.addEventListener("click", () => {
+      html.classList.toggle("dark");
+      if (html.classList.contains("dark")) {
+        localStorage.setItem("theme", "dark");
         themeIcon.classList.replace("fa-moon", "fa-sun");
+      } else {
+        localStorage.setItem("theme", "light");
+        themeIcon.classList.replace("fa-sun", "fa-moon");
       }
+    });
 
-      // Theme toggle
-      themeToggle.addEventListener("click", () => {
-        html.classList.toggle("dark");
-        if (html.classList.contains("dark")) {
-          localStorage.setItem("theme", "dark");
-          themeIcon.classList.replace("fa-moon", "fa-sun");
-        } else {
-          localStorage.setItem("theme", "light");
-          themeIcon.classList.replace("fa-sun", "fa-moon");
-        }
-      });
+    // Sidebar toggle
+    sidebarToggle.addEventListener("click", () => {
+      sidebar.classList.toggle("-translate-x-full");
+    });
 
-      // Sidebar toggle
-      sidebarToggle.addEventListener("click", () => {
-        sidebar.classList.toggle("-translate-x-full");
-      });
+    // Profile dropdown
+    profileBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      profileDropdown.classList.toggle("hidden");
+    });
 
-      // Profile dropdown
-      profileBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        profileDropdown.classList.toggle("hidden");
-      });
+    window.addEventListener("click", () => {
+      profileDropdown.classList.add("hidden");
+    });
 
-      window.addEventListener("click", () => {
-        profileDropdown.classList.add("hidden");
-      });
-    </script>
-  </body>
+    // Notification dropdown
+    notifBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      notifPanel.classList.toggle("hidden");
+    });
+
+    window.addEventListener("click", (e) => {
+      if (!notifPanel.contains(e.target) && e.target !== notifBtn) {
+        notifPanel.classList.add("hidden");
+      }
+    });
+  </script>
+</body>
 </html>

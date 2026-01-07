@@ -9,61 +9,71 @@ from employees.models import Project, LeaveRequest, Attendance, Performance
 from datetime import datetime, timedelta
 from django.db.models import Count
 
+#@login_required(login_url="/adminportal/admin/")
+import json
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.db.models import Count
+from datetime import datetime, timedelta
+from accounts.models import EmployeeProfile
+from employees.models import Project, LeaveRequest, Attendance, Performance
+
 @login_required(login_url="/adminportal/admin/")
-def dashboard(request):
-    # Stats cards
+def dashboard_view(request):
+    # --- 1. Basic Stats (SQLite Counts) ---
     total_employees = EmployeeProfile.objects.count()
     total_projects = Project.objects.count()
     pending_leaves = LeaveRequest.objects.filter(status="Pending").count()
     today_attendance = Attendance.objects.filter(date=datetime.today().date()).count()
 
-    # Project progress (example)
-    projects = Project.objects.all()
-    project_labels = [p.title for p in projects[:5]]  # Top 5 projects
-    project_progress = [p.progress for p in projects[:5]]
+    # --- 2. Project Progress Data ---
+    projects = Project.objects.all().order_by('-progress')[:5]
+    project_labels = [p.title for p in projects]
+    project_progress = [p.progress for p in projects]
+
+    # --- 3. Leave Status Data ---
+    leave_data = LeaveRequest.objects.values('status').annotate(count=Count('status'))
+    # Dict to ensure correct order in chart
+    leave_map = {"Approved": 0, "Pending": 0, "Rejected": 0}
+    for item in leave_data:
+        if item['status'] in leave_map:
+            leave_map[item['status']] = item['count']
     
-    if not project_labels:
-        project_labels = ['Project 1', 'Project 2', 'Project 3', 'Project 4', 'Project 5']
-        project_progress = [10, 40, 70, 20, 90]
+    leave_values = [leave_map["Approved"], leave_map["Pending"], leave_map["Rejected"]]
 
-    # Leave status counts
-    leave_status_counts = LeaveRequest.objects.values('status').annotate(count=Count('status'))
-    leave_status_dict = {"Pending": 0, "Approved": 0, "Rejected": 0}
-    for item in leave_status_counts:
-        leave_status_dict[item['status']] = item['count']
-
-    # Monthly attendance (last 6 months)
+    # --- 4. Attendance Trend (Last 6 Months) ---
     monthly_labels = []
     monthly_attendance = []
     today = datetime.today()
     for i in range(5, -1, -1):
-        month = today - timedelta(days=i*30)
-        label = month.strftime('%b %Y')
+        month_date = today - timedelta(days=i*30)
+        label = month_date.strftime('%b %Y')
         monthly_labels.append(label)
-        count = Attendance.objects.filter(date__year=month.year, date__month=month.month).count()
+        count = Attendance.objects.filter(date__year=month_date.year, date__month=month_date.month).count()
         monthly_attendance.append(count)
 
-    # Performance rating (example)
-    performance = Performance.objects.all()
-    employee_names = [p.employee.full_name for p in performance[:5]]
-    performance_scores = [p.overall_rating() for p in performance[:5]] if performance else [50,70,80,60,90]
+    # --- 5. Performance Scores ---
+    perf_records = Performance.objects.select_related('employee').all()[:5]
+    perf_names = [p.employee.full_name for p in perf_records]
+    perf_scores = [p.overall_rating() for p in perf_records] # Assuming it's a method
 
     context = {
         "total_employees": total_employees,
         "total_projects": total_projects,
         "pending_leaves": pending_leaves,
         "today_attendance": today_attendance,
-        "project_labels": project_labels,
-        "project_progress": project_progress,
-        "leave_status_dict": leave_status_dict,
-        "monthly_labels": monthly_labels,
-        "monthly_attendance": monthly_attendance,
-        "employee_names": employee_names,
-        "performance_scores": performance_scores,
+        
+        # Serialization for JavaScript
+        "project_labels_js": json.dumps(project_labels),
+        "project_progress_js": json.dumps(project_progress),
+        "leave_values_js": json.dumps(leave_values),
+        "monthly_labels_js": json.dumps(monthly_labels),
+        "monthly_attendance_js": json.dumps(monthly_attendance),
+        "perf_names_js": json.dumps(perf_names),
+        "perf_scores_js": json.dumps(perf_scores),
     }
 
     return render(request, "admindashboard.html", context)
-
 
 #==============
 # Payroll View

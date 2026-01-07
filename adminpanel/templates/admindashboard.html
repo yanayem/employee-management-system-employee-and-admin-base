@@ -1,135 +1,146 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
+    <title>Admin Insights | Managely</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = { 
+            darkMode: "class",
+            theme: { extend: { colors: { slate: { 950: '#020617' } } } }
+        };
+    </script>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+<body class="bg-gray-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
 
 {% include 'adminsidetopbar.html' %}
 
-<div class="ml-64 mt-16 p-6">
-
-<!-- Stats Cards -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-4 p-4">
-    <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-300">Total Employees</h2>
-        <p class="text-3xl font-bold">{{ total_employees }}</p>
-    </div>
-    <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-300">Total Projects</h2>
-        <p class="text-3xl font-bold">{{ total_projects }}</p>
-    </div>
-    <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-300">Pending Leaves</h2>
-        <p class="text-3xl font-bold">{{ pending_leaves }}</p>
-    </div>
-    <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-300">Today's Attendance</h2>
-        <p class="text-3xl font-bold">{{ today_attendance }}</p>
-    </div>
-</div>
-
-<!-- Charts Section -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-    <!-- Project Progress -->
-    <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-        <h2 class="text-lg font-semibold mb-2">Project Progress</h2>
-        <canvas id="barChart"></canvas>
+<div class="ml-0 md:ml-64 mt-16 p-8">
+    <div class="mb-10">
+        <h1 class="text-3xl font-black tracking-tight">System Analytics</h1>
+        <p class="text-slate-500 font-medium">Real-time data from SQLite Enterprise Server</p>
     </div>
 
-    <!-- Leave Status Pie -->
-    <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-        <h2 class="text-lg font-semibold mb-2">Leave Status</h2>
-        <canvas id="pieChart"></canvas>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm">
+            <p class="text-xs font-bold text-slate-400 uppercase">Workforce</p>
+            <h3 class="text-3xl font-black mt-1">{{ total_employees }}</h3>
+        </div>
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm">
+            <p class="text-xs font-bold text-slate-400 uppercase">Projects</p>
+            <h3 class="text-3xl font-black mt-1">{{ total_projects }}</h3>
+        </div>
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm">
+            <p class="text-xs font-bold text-slate-400 uppercase">Pending Leave</p>
+            <h3 class="text-3xl font-black mt-1 text-rose-500">{{ pending_leaves }}</h3>
+        </div>
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm">
+            <p class="text-xs font-bold text-slate-400 uppercase">Attendance</p>
+            <h3 class="text-3xl font-black mt-1 text-emerald-500">{{ today_attendance }}</h3>
+        </div>
     </div>
 
-    <!-- Monthly Attendance -->
-    <div class="bg-white dark:bg-gray-800 p-6 rounded shadow md:col-span-2">
-        <h2 class="text-lg font-semibold mb-2">Monthly Attendance</h2>
-        <canvas id="lineChart"></canvas>
-    </div>
+    <div class="grid grid-cols-12 gap-8">
+        
+        <div class="col-span-12 lg:col-span-8 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-gray-200 dark:border-slate-800 shadow-sm">
+            <h3 class="text-lg font-bold mb-6">Attendance Trend</h3>
+            <div class="h-80">
+                <canvas id="attendanceChart"></canvas>
+            </div>
+        </div>
 
-    <!-- Employee Performance -->
-    <div class="bg-white dark:bg-gray-800 p-6 rounded shadow md:col-span-2">
-        <h2 class="text-lg font-semibold mb-2">Top Employee Performance</h2>
-        <canvas id="perfChart"></canvas>
+        <div class="col-span-12 lg:col-span-4 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-gray-200 dark:border-slate-800 shadow-sm">
+            <h3 class="text-lg font-bold mb-6">Leave Status</h3>
+            <div class="h-80 flex items-center">
+                <canvas id="leaveChart"></canvas>
+            </div>
+        </div>
+
+        <div class="col-span-12 lg:col-span-6 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-gray-200 dark:border-slate-800 shadow-sm">
+            <h3 class="text-lg font-bold mb-6">Project Progress (%)</h3>
+            <div class="h-64">
+                <canvas id="projectChart"></canvas>
+            </div>
+        </div>
+
+        <div class="col-span-12 lg:col-span-6 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-gray-200 dark:border-slate-800 shadow-sm">
+            <h3 class="text-lg font-bold mb-6">Top Performer Scores</h3>
+            <div class="h-64">
+                <canvas id="perfChart"></canvas>
+            </div>
+        </div>
+
     </div>
-</div>
 </div>
 
 <script>
-    // Theme toggle
-    const toggle = document.getElementById('theme-toggle');
-    toggle.addEventListener('click', () => document.documentElement.classList.toggle('dark'));
+    document.addEventListener('DOMContentLoaded', function() {
+        const isDark = document.documentElement.classList.contains('dark');
+        const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
 
-    // Bar Chart - Project Progress
-    new Chart(document.getElementById('barChart'), {
-        type: 'bar',
-        data: {
-            labels: {{ project_labels|safe }},
-            datasets: [{
-                label: 'Progress %',
-                data: {{ project_progress|safe }},
-                backgroundColor: 'rgba(59,130,246,0.7)',
-                borderColor: 'rgba(59,130,246,1)',
-                borderWidth: 1
-            }]
-        },
-        options: { responsive: true, scales: { y: { beginAtZero: true, max:100 } } }
-    });
+        // 1. Attendance Line Chart
+        new Chart(document.getElementById('attendanceChart'), {
+            type: 'line',
+            data: {
+                labels: {{ monthly_labels_js|safe }},
+                datasets: [{
+                    label: 'Presence',
+                    data: {{ monthly_attendance_js|safe }},
+                    borderColor: '#6366f1',
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { grid: { color: gridColor } }, x: { grid: { display: false } } } }
+        });
 
-    // Pie Chart - Leave Status
-    new Chart(document.getElementById('pieChart'), {
-        type: 'pie',
-        data: {
-            labels: ['Pending', 'Approved', 'Rejected'],
-            datasets: [{
-                data: [
-                    {{ leave_status_dict.Pending }},
-                    {{ leave_status_dict.Approved }},
-                    {{ leave_status_dict.Rejected }}
-                ],
-                backgroundColor: ['#facc15','#22c55e','#ef4444'],
-            }]
-        }
-    });
+        // 2. Leave Doughnut Chart
+        new Chart(document.getElementById('leaveChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Approved', 'Pending', 'Rejected'],
+                datasets: [{
+                    data: {{ leave_values_js|safe }},
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                    borderWidth: 0
+                }]
+            },
+            options: { cutout: '75%', responsive: true, maintainAspectRatio: false }
+        });
 
-    // Line Chart - Monthly Attendance
-    new Chart(document.getElementById('lineChart'), {
-        type: 'line',
-        data: {
-            labels: {{ monthly_labels|safe }},
-            datasets: [{
-                label: 'Attendance',
-                data: {{ monthly_attendance|safe }},
-                fill: false,
-                borderColor: 'rgba(59,130,246,1)',
-                tension: 0.3
-            }]
-        },
-        options: { responsive: true, scales: { y: { beginAtZero:true } } }
-    });
+        // 3. Project Bar Chart
+        new Chart(document.getElementById('projectChart'), {
+            type: 'bar',
+            data: {
+                labels: {{ project_labels_js|safe }},
+                datasets: [{
+                    data: {{ project_progress_js|safe }},
+                    backgroundColor: '#0f172a',
+                    borderRadius: 10
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100 } } }
+        });
 
-    // Performance Chart - Top Employees
-    new Chart(document.getElementById('perfChart'), {
-        type: 'bar',
-        data: {
-            labels: {{ employee_names|safe }},
-            datasets: [{
-                label: 'Performance Score',
-                data: {{ performance_scores|safe }},
-                backgroundColor: 'rgba(34,197,94,0.7)',
-                borderColor: 'rgba(34,197,94,1)',
-                borderWidth: 1
-            }]
-        },
-        options: { responsive:true, scales: { y: { beginAtZero:true, max:100 } } }
+        // 4. Performance Chart
+        new Chart(document.getElementById('perfChart'), {
+            type: 'bar',
+            data: {
+                labels: {{ perf_names_js|safe }},
+                datasets: [{
+                    data: {{ perf_scores_js|safe }},
+                    backgroundColor: '#6366f1',
+                    borderRadius: 10
+                }]
+            },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false }
+        });
     });
 </script>
-
 </body>
 </html>

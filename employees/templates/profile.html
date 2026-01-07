@@ -5,164 +5,244 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ employee.full_name }} | Profile</title>
-  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+  <title>{{ profile.full_name }} | Profile</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            primary: '#1e40af',
-            secondary: '#2563eb',
-            accent: '#3b82f6',
-          },
-        }
+      theme: { 
+        extend: { 
+          colors: { 
+            primary:'#1e40af', 
+            secondary:'#2563eb', 
+            accent:'#3b82f6',
+            slate: { 950: '#020617' }
+          } 
+        } 
       }
     }
   </script>
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 </head>
-<body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-white transition-colors duration-500">
 
+<body class="bg-gray-50 dark:bg-slate-950 text-gray-900 dark:text-slate-100 transition-colors duration-500">
 
   {% include 'sideandtopbar.html' %}
 
-  <div class="max-w-5xl mx-auto p-6 mt-20 space-y-6">
+  <div class="max-w-6xl ml-0 md:ml-64 mx-auto p-6 mt-20 space-y-8 relative">
 
-    <!-- ==================== Read Mode ==================== -->
-    <div id="read-mode" class="bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-6 animate-fadeIn">
-      <div class="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">
+    <div id="toast" class="fixed top-5 right-5 hidden bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-[100]"></div>
 
-        <!-- Avatar -->
-        <div class="flex-shrink-0">
-          {% if profile.avatar %}
-          <img src="{{ profile.avatar.url }}" alt="Avatar" class="w-32 h-32 rounded-full object-cover border-4 border-primary">
-          {% else %}
-          <div class="w-32 h-32 rounded-full bg-primary flex items-center justify-center text-white text-4xl font-bold">
-            {{ profile.initials }}
-          </div>
-          {% endif %}
-        </div>
+    <div class="bg-white dark:bg-slate-900 shadow-xl rounded-3xl p-8 relative group hover:shadow-2xl transition-all duration-300 border border-transparent dark:border-slate-800">
+      <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
 
-        <!-- Info -->
-        <div class="flex-1 space-y-2">
-          <h2 class="text-3xl font-bold">{{ employee.full_name }}</h2>
-          <p class="text-gray-500 dark:text-gray-300">{{ profile.role|default:"Employee" }}</p>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 text-gray-700 dark:text-gray-300">
-            <div><span class="font-semibold">Employee ID:</span> {{ employee.employee_id }}</div>
-            <div><span class="font-semibold">Phone:</span> {{ employee.phone }}</div>
-            <div><span class="font-semibold">Department:</span> {{ profile.department|default:"-" }}</div>
-            <div><span class="font-semibold">Designation:</span> {{ profile.designation|default:"-" }}</div>
-            <div><span class="font-semibold">Joining Date:</span> {{ profile.joining_date|date:'Y-m-d'|default:"-" }}</div>
-            <div><span class="font-semibold">Emergency Contact:</span> {{ profile.emergency_contact|default:"-" }}</div>
-            <div><span class="font-semibold">Tenure:</span> {{ profile.tenure_years }} year(s)</div>
-            <div class="sm:col-span-2"><span class="font-semibold">Address:</span> {{ profile.address|default:"-" }}</div>
+        <form id="auto-avatar-form" method="POST" enctype="multipart/form-data" class="relative flex-shrink-0 group/avatar">
+          {% csrf_token %}
+          <div class="ring-4 ring-primary ring-offset-4 dark:ring-offset-slate-900 rounded-full overflow-hidden w-36 h-36 bg-gray-200">
+            {% if profile.avatar %}
+              <img id="avatar-img" src="{{ profile.avatar.url }}" alt="Avatar" class="w-full h-full object-cover transition-transform duration-300 group-hover/avatar:scale-110">
+            {% else %}
+              <img id="avatar-img" src="https://i.pravatar.cc/150?img={% if profile.gender == 'Male' %}3{% elif profile.gender == 'Female' %}5{% else %}10{% endif %}" class="w-full h-full object-cover">
+            {% endif %}
           </div>
 
-          <!-- Edit Button -->
-          <div class="mt-6">
-            <button id="edit-btn" class="px-6 py-2 bg-primary text-white rounded-lg shadow hover:bg-secondary transition">
-              <i class="fas fa-edit mr-2"></i> Edit Profile
+          <div class="absolute inset-0 flex items-center justify-center space-x-2 opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-300 bg-black/30 rounded-full">
+            <label title="Upload New" class="bg-primary text-white p-2.5 rounded-full cursor-pointer hover:bg-secondary shadow-lg transform hover:scale-110 transition-transform">
+              <i class="fas fa-camera"></i>
+              <input id="avatar-input" type="file" name="avatar" class="hidden" accept="image/*">
+            </label>
+            {% if profile.avatar %}
+            <button type="button" id="remove-avatar-trigger" title="Remove Avatar" class="bg-rose-500 text-white p-2.5 rounded-full hover:bg-rose-600 shadow-lg transform hover:scale-110 transition-transform">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+            {% endif %}
+          </div>
+          <input type="hidden" id="remove-avatar-input" name="remove_avatar" value="0">
+        </form>
+
+        <div class="flex-1 space-y-4 w-full">
+          <div class="text-center md:text-left">
+            <h2 class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">{{ profile.full_name }}</h2>
+            <p class="text-primary font-bold dark:text-accent mt-1 flex items-center justify-center md:justify-start">
+                <i class="fas fa-id-card-clip mr-2"></i> {{ profile.role|default:"Employee" }}
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 text-slate-600 dark:text-slate-300">
+            <div class="bg-gray-50 dark:bg-slate-800/50 p-3 rounded-xl"><span class="font-bold text-slate-400 block text-xs uppercase mb-1">Phone</span> {{ profile.phone }}</div>
+            <div class="bg-gray-50 dark:bg-slate-800/50 p-3 rounded-xl"><span class="font-bold text-slate-400 block text-xs uppercase mb-1">Department</span> {{ profile.department|default:"-" }}</div>
+            <div class="bg-gray-50 dark:bg-slate-800/50 p-3 rounded-xl"><span class="font-bold text-slate-400 block text-xs uppercase mb-1">Designation</span> {{ profile.designation|default:"-" }}</div>
+            <div class="bg-gray-50 dark:bg-slate-800/50 p-3 rounded-xl"><span class="font-bold text-slate-400 block text-xs uppercase mb-1">Gender</span> {{ profile.gender|default:"-" }}</div>
+            <div class="bg-gray-50 dark:bg-slate-800/50 p-3 rounded-xl"><span class="font-bold text-slate-400 block text-xs uppercase mb-1">Joining Date</span> {{ profile.joining_date|date:"Y-m-d"|default:"-" }}</div>
+            <div class="sm:col-span-2 bg-gray-50 dark:bg-slate-800/50 p-3 rounded-xl"><span class="font-bold text-slate-400 block text-xs uppercase mb-1">Address</span> {{ profile.address|default:"-" }}</div>
+          </div>
+
+          <div class="mt-6 flex flex-wrap gap-2 justify-center md:justify-start">
+            <button id="open-profile-modal" class="px-6 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-secondary transition-all shadow-md flex items-center">
+              <i class="fas fa-user-edit mr-2"></i> Edit Profile
+            </button>
+            <button id="open-emergency-modal" class="px-6 py-2.5 bg-slate-800 dark:bg-slate-700 text-white font-bold rounded-xl hover:opacity-90 transition flex items-center">
+              <i class="fas fa-house-medical mr-2"></i> Emergency Info
+            </button>
+            <button id="open-password-modal" class="px-6 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 font-bold rounded-xl hover:bg-gray-50 transition flex items-center">
+              <i class="fas fa-shield-halved mr-2"></i> Security
             </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ==================== Edit Mode ==================== -->
-    <form id="edit-mode" method="POST" enctype="multipart/form-data" class="bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-6 hidden animate-fadeIn">
-      {% csrf_token %}
-      <div class="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">
-
-        <!-- Avatar -->
-        <div class="flex-shrink-0">
-          {% if profile.avatar %}
-          <img src="{{ profile.avatar.url }}" alt="Avatar" class="w-32 h-32 rounded-full object-cover border-4 border-primary">
-          {% else %}
-          <div class="w-32 h-32 rounded-full bg-primary flex items-center justify-center text-white text-4xl font-bold">
-            {{ profile.initials }}
-          </div>
-          {% endif %}
-          <input type="file" name="avatar" class="mt-2 w-full text-gray-900 dark:text-white dark:bg-gray-700" accept="image/*" />
+    <div class="bg-white dark:bg-slate-900 shadow-xl rounded-3xl p-8 border border-transparent dark:border-slate-800">
+      <div class="flex items-center space-x-3 mb-6">
+        <div class="p-2 bg-rose-100 dark:bg-rose-900/30 rounded-lg">
+            <i class="fas fa-heart-pulse text-rose-600"></i>
         </div>
+        <h3 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Emergency Contact</h3>
+      </div>
 
-        <!-- Editable Fields -->
-        <div class="flex-1 space-y-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="font-semibold">Full Name:</label>
-              <input type="text" name="full_name" value="{{ employee.full_name }}" class="w-full rounded border px-2 py-1 text-gray-900 dark:text-white dark:bg-gray-700" />
-            </div>
-            <div>
-              <label class="font-semibold">Phone:</label>
-              <input type="text" name="phone" value="{{ employee.phone }}" class="w-full rounded border px-2 py-1 text-gray-900 dark:text-white dark:bg-gray-700" />
-            </div>
-            <div>
-              <label class="font-semibold">Role:</label>
-              <input type="text" name="role" value="{{ profile.role|default:'Employee' }}" class="w-full rounded border px-2 py-1 text-gray-900 dark:text-white dark:bg-gray-700" />
-            </div>
-            <div>
-              <label class="font-semibold">Department:</label>
-              <input type="text" name="department" value="{{ profile.department|default:'' }}" class="w-full rounded border px-2 py-1 text-gray-900 dark:text-white dark:bg-gray-700" />
-            </div>
-            <div>
-              <label class="font-semibold">Designation:</label>
-              <input type="text" name="designation" value="{{ profile.designation|default:'' }}" class="w-full rounded border px-2 py-1 text-gray-900 dark:text-white dark:bg-gray-700" />
-            </div>
-            <div>
-              <label class="font-semibold">Joining Date:</label>
-              <input type="date" name="joining_date" value="{{ profile.joining_date|date:'Y-m-d' }}" class="w-full rounded border px-2 py-1 text-gray-900 dark:text-white dark:bg-gray-700" />
-            </div>
-            <div>
-              <label class="font-semibold">Emergency Contact:</label>
-              <input type="text" name="emergency_contact" value="{{ profile.emergency_contact|default:'' }}" class="w-full rounded border px-2 py-1 text-gray-900 dark:text-white dark:bg-gray-700" />
-            </div>
-            <div class="sm:col-span-2">
-              <label class="font-semibold">Address:</label>
-              <textarea name="address" class="w-full rounded border px-2 py-1 text-gray-900 dark:text-white dark:bg-gray-700">{{ profile.address|default:'' }}</textarea>
-            </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-slate-700 dark:text-slate-300">
+        <div class="flex items-start space-x-3">
+          <i class="fas fa-user-tag mt-1 text-slate-400"></i>
+          <div>
+              <span class="block text-xs font-bold text-slate-400 uppercase tracking-widest">Name</span> 
+              <p class="text-lg font-bold">{{ profile.emergency_name|default:"Not Provided" }}</p>
           </div>
-
-          <!-- Save & Cancel Buttons -->
-          <div class="mt-6 flex space-x-4">
-            <button type="submit" class="px-6 py-2 bg-primary text-white rounded-lg shadow hover:bg-secondary transition">
-              <i class="fas fa-save mr-2"></i> Save
-            </button>
-            <button type="button" id="cancel-btn" class="px-6 py-2 bg-gray-400 text-white rounded-lg shadow hover:bg-gray-500 transition">
-              Cancel
-            </button>
+        </div>
+        <div class="flex items-start space-x-3">
+          <i class="fas fa-people-arrows mt-1 text-slate-400"></i>
+          <div>
+              <span class="block text-xs font-bold text-slate-400 uppercase tracking-widest">Relation</span> 
+              <p class="text-lg font-bold">{{ profile.emergency_relation|default:"Not Provided" }}</p>
           </div>
-
+        </div>
+        <div class="flex items-start space-x-3">
+          <i class="fas fa-phone-volume mt-1 text-slate-400"></i>
+          <div>
+              <span class="block text-xs font-bold text-slate-400 uppercase tracking-widest">Phone</span> 
+              <p class="text-lg font-bold">{{ profile.emergency_contact|default:"No Contact Info" }}</p>
+          </div>
+        </div>
+        <div class="sm:col-span-2 lg:col-span-3 flex items-start space-x-3">
+          <i class="fas fa-map-location-dot mt-1 text-slate-400"></i>
+          <div>
+              <span class="block text-xs font-bold text-slate-400 uppercase tracking-widest">Address</span> 
+              <p class="font-bold">{{ profile.emergency_address|default:"No Address Provided" }}</p>
+          </div>
         </div>
       </div>
-    </form>
+    </div>
   </div>
 
-  <style>
-    .animate-fadeIn { opacity: 0; animation: fadeIn 0.7s forwards; }
-    @keyframes fadeIn { to { opacity: 1; } }
-  </style>
+  <div id="modal-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-[110] flex items-center justify-center p-4">
+    <div id="modal-content" class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-2xl w-full p-8 relative border dark:border-slate-800">
+      <button id="modal-close" class="absolute top-5 right-5 text-slate-400 hover:text-rose-500 transition-colors">
+        <i class="fas fa-circle-xmark text-2xl"></i>
+      </button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
 
   <script>
-    const editBtn = document.getElementById("edit-btn");
-    const cancelBtn = document.getElementById("cancel-btn");
-    const readMode = document.getElementById("read-mode");
-    const editMode = document.getElementById("edit-mode");
+    const toast = document.getElementById("toast");
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.remove("hidden");
+      setTimeout(()=> toast.classList.add("hidden"), 3000);
+    }
 
-    // Show edit mode
-    editBtn.addEventListener("click", () => {
-      readMode.classList.add("hidden");
-      editMode.classList.remove("hidden");
+    const avatarForm = document.getElementById("auto-avatar-form");
+    const avatarInput = document.getElementById("avatar-input");
+    const removeTrigger = document.getElementById("remove-avatar-trigger");
+    const removeInput = document.getElementById("remove-avatar-input");
+
+    avatarInput.addEventListener("change", (e) => {
+      if(e.target.files[0]) {
+        showToast("Uploading new avatar...");
+        avatarForm.submit();
+      }
     });
 
-    // Cancel edit
-    cancelBtn.addEventListener("click", () => {
-      editMode.classList.add("hidden");
-      readMode.classList.remove("hidden");
-    });
+    if(removeTrigger) {
+      removeTrigger.addEventListener("click", () => {
+        if(confirm("Are you sure you want to remove your profile picture?")) {
+          removeInput.value = "1";
+          showToast("Removing avatar...");
+          avatarForm.submit();
+        }
+      });
+    }
+
+    const modalOverlay = document.getElementById("modal-overlay");
+    const modalBody = document.getElementById("modal-body");
+    const modalClose = document.getElementById("modal-close");
+
+    const inputStyle = "w-full rounded-xl border border-slate-200 px-4 py-2.5 dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 mb-4";
+    const labelStyle = "block text-xs font-bold text-slate-500 mb-1 px-1 uppercase tracking-widest";
+
+    const profileFormHTML = `
+      <h3 class="text-2xl font-black mb-6 text-slate-900 dark:text-white">General Information</h3>
+      <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+          <div><label class="${labelStyle}">Full Name</label><input type="text" name="full_name" value="{{ profile.full_name }}" class="${inputStyle}" placeholder="e.g. John Doe"></div>
+          <div><label class="${labelStyle}">Phone</label><input type="text" name="phone" value="{{ profile.phone }}" class="${inputStyle}" placeholder="e.g. +880123456789"></div>
+          <div><label class="${labelStyle}">Department</label><input type="text" name="department" value="{{ profile.department }}" class="${inputStyle}" placeholder="e.g. Engineering"></div>
+          <div><label class="${labelStyle}">Designation</label><input type="text" name="designation" value="{{ profile.designation }}" class="${inputStyle}" placeholder="e.g. Software Engineer"></div>
+          <div><label class="${labelStyle}">Role</label><input type="text" name="role" value="{{ profile.role }}" class="${inputStyle}" placeholder="e.g. Admin/Staff"></div>
+          <div><label class="${labelStyle}">Gender</label>
+            <select name="gender" class="${inputStyle}">
+               <option value="Male" {% if profile.gender == "Male" %}selected{% endif %}>Male</option>
+               <option value="Female" {% if profile.gender == "Female" %}selected{% endif %}>Female</option>
+               <option value="Other" {% if profile.gender == "Other" %}selected{% endif %}>Other</option>
+            </select>
+          </div>
+          <div><label class="${labelStyle}">Joining Date</label><input type="date" name="joining_date" value="{{ profile.joining_date|date:'Y-m-d' }}" class="${inputStyle}"></div>
+          <div class="sm:col-span-2"><label class="${labelStyle}">Address</label><textarea name="address" class="${inputStyle} h-20" placeholder="Enter your full residential address">{{ profile.address }}</textarea></div>
+        </div>
+        <div class="mt-4 flex justify-end">
+          <button type="submit" class="px-8 py-3 bg-primary text-white font-bold rounded-xl hover:bg-secondary shadow-lg transition-all">Save Profile</button>
+        </div>
+      </form>
+    `;
+
+    const emergencyFormHTML = `
+      <h3 class="text-2xl font-black mb-6 text-slate-900 dark:text-white">Emergency Details</h3>
+      <form method="POST">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+          <div><label class="${labelStyle}">Contact Name</label><input type="text" name="emergency_name" value="{{ profile.emergency_name }}" class="${inputStyle}" placeholder="Contact Person's Name"></div>
+          <div><label class="${labelStyle}">Relation</label><input type="text" name="emergency_relation" value="{{ profile.emergency_relation }}" class="${inputStyle}" placeholder="e.g. Father, Mother, Spouse"></div>
+          <div><label class="${labelStyle}">Phone</label><input type="text" name="emergency_contact" value="{{ profile.emergency_contact }}" class="${inputStyle}" placeholder="e.g. +8801987654321"></div>
+          <div class="sm:col-span-2"><label class="${labelStyle}">Full Address</label><textarea name="emergency_address" class="${inputStyle} h-24" placeholder="Contact Person's full address">{{ profile.emergency_address }}</textarea></div>
+        </div>
+        <div class="mt-4 flex justify-end">
+          <button type="submit" class="px-8 py-3 bg-primary text-white font-bold rounded-xl hover:bg-secondary shadow-lg transition-all">Update Emergency Info</button>
+        </div>
+      </form>
+    `;
+
+    const passwordFormHTML = `
+      <div class="text-center mb-6"><h3 class="text-2xl font-black text-slate-900 dark:text-white">Change Password</h3></div>
+      <form method="POST">
+        {% csrf_token %}
+        <div class="space-y-4">
+          <div><label class="${labelStyle}">New Password</label><input type="password" name="new_password" class="${inputStyle}" placeholder="Enter at least 8 characters"></div>
+          <div><label class="${labelStyle}">Confirm Password</label><input type="password" name="confirm_password" class="${inputStyle}" placeholder="Repeat your new password"></div>
+        </div>
+        <div class="mt-6">
+          <button type="submit" class="w-full py-3 bg-primary text-white font-black rounded-xl hover:bg-secondary shadow-lg transition-all">Reset Password Now</button>
+        </div>
+      </form>
+    `;
+
+    document.getElementById("open-profile-modal").onclick = () => { modalBody.innerHTML = profileFormHTML; modalOverlay.classList.remove("hidden"); };
+    document.getElementById("open-emergency-modal").onclick = () => { modalBody.innerHTML = emergencyFormHTML; modalOverlay.classList.remove("hidden"); };
+    document.getElementById("open-password-modal").onclick = () => { modalBody.innerHTML = passwordFormHTML; modalOverlay.classList.remove("hidden"); };
+
+    modalClose.onclick = () => modalOverlay.classList.add("hidden");
+    window.onclick = (e) => { if(e.target == modalOverlay) modalOverlay.classList.add("hidden"); };
   </script>
 
 </body>

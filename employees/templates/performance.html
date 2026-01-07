@@ -20,12 +20,6 @@
       {% if error %}
         <p class="text-red-500 font-semibold">{{ error }}</p>
       {% else %}
-
-      <!-- Dark/Light Toggle -->
-      <div class="flex justify-end mb-4">
-        <button id="theme-toggle" class="px-2 py-1 border rounded text-sm">Toggle Dark</button>
-      </div>
-
       <!-- Page Header -->
       <div class="mb-6">
         <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200">Performance</h1>
@@ -139,35 +133,56 @@
   </main>
 
   <!-- JS -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      // Animate progress bars
-      const bars = document.querySelectorAll(".progress-bar");
-      bars.forEach(bar => {
-        const width = bar.dataset.width;
-        setTimeout(() => {
-          bar.style.transition = "width 1s ease-in-out";
-          bar.style.width = width + "%";
-        }, 100);
-      });
+<script>
+document.addEventListener("DOMContentLoaded", () => {
 
-      // Collapse/expand feedback
-      const btn = document.getElementById("toggle-feedback");
-      const container = document.getElementById("feedback-container");
-      if(btn){
-        btn.addEventListener("click", () => {
-          container.classList.toggle("max-h-64");
-          btn.textContent = container.classList.contains("max-h-64") ? "Show More" : "Show Less";
-        });
-      }
+  /* -----------------------------
+     Persistent Dark / Light Mode
+  ----------------------------- */
+  const root = document.documentElement;
+  const savedTheme = localStorage.getItem("theme");
 
-      // Dark/light toggle
-      const themeToggle = document.getElementById("theme-toggle");
-      themeToggle.addEventListener("click", () => {
-        document.documentElement.classList.toggle("dark");
-      });
+  if (savedTheme === "dark") {
+    root.classList.add("dark");
+  } else if (savedTheme === "light") {
+    root.classList.remove("dark");
+  } else {
+    // System preference fallback
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      root.classList.add("dark");
+    }
+  }
+
+  /* -----------------------------
+     Animate Progress Bars
+  ----------------------------- */
+  const bars = document.querySelectorAll(".progress-bar");
+  bars.forEach(bar => {
+    const width = bar.dataset.width;
+    setTimeout(() => {
+      bar.style.transition = "width 1s ease-in-out";
+      bar.style.width = width + "%";
+    }, 150);
+  });
+
+  /* -----------------------------
+     Feedback Show More / Less
+  ----------------------------- */
+  const btn = document.getElementById("toggle-feedback");
+  const container = document.getElementById("feedback-container");
+
+  if (btn && container) {
+    btn.addEventListener("click", () => {
+      container.classList.toggle("max-h-64");
+      btn.textContent = container.classList.contains("max-h-64")
+        ? "Show More"
+        : "Show Less";
     });
-  </script>
+  }
+
+});
+</script>
+
 
 </body>
 </html>

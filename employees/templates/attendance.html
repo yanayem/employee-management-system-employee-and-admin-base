@@ -5,123 +5,136 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>My Attendance</title>
-<link rel="stylesheet" href="{% static 'css/theme.css' %}">
+<link rel="stylesheet" href="{% static 'css/enterprise_pulse.css' %}">
 <script src="https://cdn.tailwindcss.com"></script>
-<script>
-    tailwind.config = { darkMode: 'class' }
-  </script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<script>tailwind.config = { darkMode: 'class' }</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
-<body class="bg-gray-100">
+
+<body class="bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-slate-100 min-h-screen font-sans">
 
 {% include 'sideandtopbar.html' %}
 
 <main class="flex-1 p-6 md:ml-64 space-y-6 mt-16" id="attendance-page">
 
-    <!-- Header + Buttons -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-800">My Attendance</h1>
-            <p class="text-gray-500">Track your attendance and working hours</p>
-        </div>
-        <div class="flex space-x-3">
-            <form method="POST" action="{% url 'employees:attendance' %}" class="flex space-x-3">
-                {% csrf_token %}
-                <button type="submit" name="action" value="check_in" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition duration-200">
-                    <i class="fas fa-sign-in-alt mr-2"></i>Check In
-                </button>
-                <button type="submit" name="action" value="check_out" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition duration-200">
-                    <i class="fas fa-sign-out-alt mr-2"></i>Check Out
-                </button>
-            </form>
-        </div>
-    </div>
+  <!-- Messages -->
+{% if messages %}
+<div class="space-y-2 mb-4">
+  {% for message in messages %}
+    {% if "attendance" in message.tags %}
+      <div class="px-4 py-2 rounded bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
+        {{ message }}
+      </div>
+    {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
 
-    <!-- Status + Weekly/Monthly Summary -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+  <!-- Header + Buttons -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+      <div>
+          <h1 class="text-3xl font-bold text-slate-900 dark:text-slate-100">My Attendance</h1>
+          <p class="text-gray-600 dark:text-gray-400">Track your attendance and working hours</p>
+      </div>
+      <div class="flex space-x-3">
+          <form method="POST" action="{% url 'employees:attendance' %}" class="flex space-x-3">
+              {% csrf_token %}
+              <button type="submit" name="action" value="check_in" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition duration-200">
+                  <i class="fas fa-sign-in-alt mr-2"></i>Check In
+              </button>
+              <button type="submit" name="action" value="check_out" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition duration-200">
+                  <i class="fas fa-sign-out-alt mr-2"></i>Check Out
+              </button>
+          </form>
+      </div>
+  </div>
 
-        <!-- Today's Status -->
-        <div class="bg-white rounded-xl p-6 shadow border">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-800">Today's Status</h3>
-                <span class="px-2 py-1 rounded text-white
-                    {% if attendance.status == 'Present' %}bg-green-500
-                    {% elif attendance.status == 'Late' %}bg-yellow-500
-                    {% elif attendance.status == 'Absent' %}bg-red-500
-                    {% else %}bg-gray-400{% endif %}">
-                    {{ attendance.status }}
-                </span>
-            </div>
-            <div class="space-y-2">
-                <div class="flex justify-between"><span class="text-gray-500">Check In:</span> <span class="text-gray-800 font-medium">{{ attendance.check_in|default:"-" }}</span></div>
-                <div class="flex justify-between"><span class="text-gray-500">Check Out:</span> <span class="text-gray-800 font-medium">{{ attendance.check_out|default:"-" }}</span></div>
-                <div class="flex justify-between"><span class="text-gray-500">Working Hours:</span> <span class="text-gray-800 font-medium">{{ attendance.working_hours|default:"-" }}</span></div>
-            </div>
-        </div>
+  <!-- Status + Weekly/Monthly Summary -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 
-        <!-- This Week -->
-        <div class="bg-white rounded-xl p-6 shadow border">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">This Week</h3>
-            <div class="space-y-2">
-                <div class="flex justify-between"><span class="text-gray-500">Days Present:</span> <span class="text-gray-800 font-medium">{{ week_days_present }}/{{ week_total_days }}</span></div>
-                <div class="flex justify-between"><span class="text-gray-500">Total Hours:</span> <span class="text-gray-800 font-medium">{{ total_week_hours }}</span></div>
-            </div>
-        </div>
+      <!-- Today's Status -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow border border-gray-200 dark:border-gray-700">
+          <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Today's Status</h3>
+              <span class="px-2 py-1 rounded text-white
+                  {% if today_record.status == 'Present' %}bg-green-500
+                  {% elif today_record.status == 'Late' %}bg-yellow-500
+                  {% elif today_record.status == 'Absent' %}bg-red-500
+                  {% else %}bg-gray-400{% endif %}">
+                  {{ today_record.status|default:"-" }}
+              </span>
+          </div>
+          <div class="space-y-2 text-slate-900 dark:text-slate-100">
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Check In:</span> <span class="font-medium">{{ today_record.check_in|default:"-" }}</span></div>
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Check Out:</span> <span class="font-medium">{{ today_record.check_out|default:"-" }}</span></div>
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Working Hours:</span> <span class="font-medium">{{ today_record.working_hours|default:"-" }}</span></div>
+          </div>
+      </div>
 
-        <!-- This Month -->
-        <div class="bg-white rounded-xl p-6 shadow border">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">This Month</h3>
-            <div class="space-y-2">
-                <div class="flex justify-between"><span class="text-gray-500">Attendance:</span> <span class="text-gray-800 font-medium">{{ attendance_percent }}%</span></div>
-                <div class="flex justify-between"><span class="text-gray-500">Late Days:</span> <span class="text-gray-800 font-medium">{{ late_days }}</span></div>
-            </div>
-        </div>
+      <!-- This Week -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow border border-gray-200 dark:border-gray-700">
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">This Week</h3>
+          <div class="space-y-2 text-slate-900 dark:text-slate-100">
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Days Present:</span> <span class="font-medium">{{ week_days_present }}/{{ week_total_days }}</span></div>
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Total Hours:</span> <span class="font-medium">{{ total_week_hours }}</span></div>
+          </div>
+      </div>
 
-    </div>
+      <!-- This Month -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow border border-gray-200 dark:border-gray-700">
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">This Month</h3>
+          <div class="space-y-2 text-slate-900 dark:text-slate-100">
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Attendance:</span> <span class="font-medium">{{ attendance_percent }}%</span></div>
+              <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Late Days:</span> <span class="font-medium">{{ late_days }}</span></div>
+          </div>
+      </div>
 
-    <!-- Attendance History -->
-    <div class="bg-white rounded-xl shadow border">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-800">Attendance History</h3>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-800">Date</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-800">Check In</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-800">Check Out</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-800">Working Hours</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-800">Status</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    {% for record in month_records %}
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-6 py-4 text-gray-800">{{ record.date }}</td>
-                        <td class="px-6 py-4 text-gray-800">{{ record.check_in|default:"-" }}</td>
-                        <td class="px-6 py-4 text-gray-800">{{ record.check_out|default:"-" }}</td>
-                        <td class="px-6 py-4 text-gray-800">{{ record.working_hours|default:"-" }}</td>
-                        <td class="px-6 py-4">
-                            <span class="px-2 py-1 rounded text-white
-                                {% if record.status == 'Present' %}bg-green-500
-                                {% elif record.status == 'Late' %}bg-yellow-500
-                                {% elif record.status == 'Absent' %}bg-red-500
-                                {% else %}bg-gray-400{% endif %}">
-                                {{ record.status|default:"-" }}
-                            </span>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">No records found</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+  </div>
+
+  <!-- Attendance History -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Attendance History</h3>
+      </div>
+      <div class="overflow-x-auto">
+          <table class="w-full text-slate-900 dark:text-slate-100">
+              <thead class="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                      <th class="px-6 py-4 text-left text-sm font-semibold">Date</th>
+                      <th class="px-6 py-4 text-left text-sm font-semibold">Check In</th>
+                      <th class="px-6 py-4 text-left text-sm font-semibold">Check Out</th>
+                      <th class="px-6 py-4 text-left text-sm font-semibold">Working Hours</th>
+                      <th class="px-6 py-4 text-left text-sm font-semibold">Status</th>
+                  </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                  {% for record in month_records %}
+                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                      <td class="px-6 py-4">{{ record.date }}</td>
+                      <td class="px-6 py-4">{{ record.check_in|default:"-" }}</td>
+                      <td class="px-6 py-4">{{ record.check_out|default:"-" }}</td>
+                      <td class="px-6 py-4">{{ record.working_hours|default:"-" }}</td>
+                      <td class="px-6 py-4">
+                          <span class="px-2 py-1 rounded text-white
+                              {% if record.status == 'Present' %}bg-green-500
+                              {% elif record.status == 'Late' %}bg-yellow-500
+                              {% elif record.status == 'Absent' %}bg-red-500
+                              {% else %}bg-gray-400{% endif %}">
+                              {{ record.status|default:"-" }}
+                          </span>
+                      </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                      <td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No records found</td>
+                  </tr>
+                  {% endfor %}
+              </tbody>
+          </table>
+      </div>
+  </div>
 
 </main>
+
 </body>
 </html>

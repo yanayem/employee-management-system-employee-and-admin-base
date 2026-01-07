@@ -1,120 +1,137 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en" class="light">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Payroll Form</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script>
-      // Enable Tailwind class-based dark mode
-      tailwind.config = { darkMode: "class" };
+        tailwind.config = { 
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        slate: { 950: '#020617' }
+                    }
+                }
+            }
+        };
+
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
     </script>
 </head>
 
-<body class="bg-gray-100 dark:bg-blue-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+<body class="bg-gray-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
 
-<!-- Include Admin Sidebar + Topbar -->
 {% include 'adminsidetopbar.html' %}
 
-<div class="ml-64 mt-16 p-6">
+<div class="ml-0 md:ml-64 mt-16 p-6">
 
-    <!-- PAGE TITLE -->
-    <h2 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100">
-        {% if payroll %} Edit Payroll {% else %} Add New Payroll {% endif %}
-    </h2>
+    <div class="mb-8">
+        <h2 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+            {% if payroll %} Edit Payroll {% else %} Create New Payroll {% endif %}
+        </h2>
+        <p class="text-slate-500 dark:text-slate-400">Please fill in the details to process the salary record.</p>
+    </div>
 
-    <!-- MESSAGES -->
     {% if messages %}
-    <div class="mb-4">
+    <div class="mb-6 space-y-2 w-full md:w-2/3">
         {% for message in messages %}
-        <div class="p-3 rounded-lg {% if message.tags == 'error' %}bg-red-200 text-red-800{% else %}bg-green-200 text-green-800{% endif %}">
+        <div class="p-4 rounded-xl flex items-center shadow-sm {% if message.tags == 'error' %}bg-rose-100 text-rose-800 border border-rose-200{% else %}bg-emerald-100 text-emerald-800 border border-emerald-200{% endif %}">
+            <i class="fas {% if message.tags == 'error' %}fa-circle-xmark{% else %}fa-circle-check{% endif %} mr-3"></i>
             {{ message }}
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
-    <!-- FORM -->
-    <form method="POST" class="bg-white dark:bg-blue-800 p-6 rounded-xl shadow-lg w-full md:w-2/3">
+    <form method="POST" class="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800 w-full md:w-2/3 lg:w-1/2">
         {% csrf_token %}
 
-        <!-- Employee -->
-        <label class="block mb-5">
-            <span class="font-semibold">Employee</span>
-            <select name="employee"
-                    class="w-full p-3 mt-1 rounded-lg border dark:bg-blue-700 dark:border-blue-600">
-                {% for emp in employees %}
-                <option value="{{ emp.id }}"
-                        {% if payroll and payroll.employee.id == emp.id %}selected{% endif %}>
-                    {{ emp.full_name }} ({{ emp.employee_id }})
-                </option>
-                {% endfor %}
-            </select>
-        </label>
+        <div class="mb-5">
+            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">Employee</label>
+            <div class="relative">
+                <select name="employee"
+                        class="w-full p-3 pl-4 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 outline-none appearance-none transition-all">
+                    {% for emp in employees %}
+                    <option value="{{ emp.id }}"
+                            {% if payroll and payroll.employee.id == emp.id %}selected{% endif %}>
+                        {{ emp.full_name }} ({{ emp.employee_id }})
+                    </option>
+                    {% endfor %}
+                </select>
+                <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs"></i>
+            </div>
+        </div>
 
-        <!-- Month -->
-        <label class="block mb-5">
-            <span class="font-semibold">Month</span>
-            <input type="month" name="month"
-                   value="{% if payroll %}{{ payroll.month|date:'Y-m' }}{% endif %}"
-                   placeholder="e.g., 2025-11"
-                   class="w-full p-3 mt-1 rounded-lg border dark:bg-blue-700 dark:border-blue-600"
-                   required>
-        </label>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="mb-5">
+                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">Month</label>
+                <input type="month" name="month"
+                       value="{% if payroll %}{{ payroll.month|date:'Y-m' }}{% endif %}"
+                       class="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 outline-none transition-all"
+                       required>
+            </div>
 
-        <!-- Gross Salary -->
-        <label class="block mb-5">
-            <span class="font-semibold">Gross Salary</span>
-            <input type="number" id="gross" name="gross_salary"
-                   value="{% if payroll %}{{ payroll.gross_salary }}{% endif %}"
-                   placeholder="Enter gross salary"
-                   class="w-full p-3 mt-1 rounded-lg border dark:bg-blue-700 dark:border-blue-600"
-                   required>
-        </label>
+            <div class="mb-5">
+                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">Gross Salary</label>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                    <input type="number" id="gross" name="gross_salary"
+                           value="{% if payroll %}{{ payroll.gross_salary }}{% endif %}"
+                           placeholder="0.00"
+                           class="w-full p-3 pl-8 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 outline-none transition-all"
+                           required>
+                </div>
+            </div>
+        </div>
 
-        <!-- Deductions -->
-        <label class="block mb-5">
-            <span class="font-semibold">Deductions</span>
-            <input type="number" id="deductions" name="deductions"
-                   value="{% if payroll %}{{ payroll.deductions }}{% endif %}"
-                   placeholder="Enter deductions"
-                   class="w-full p-3 mt-1 rounded-lg border dark:bg-blue-700 dark:border-blue-600"
-                   required>
-        </label>
+        <div class="mb-5">
+            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">Total Deductions</label>
+            <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-rose-400">-</span>
+                <input type="number" id="deductions" name="deductions"
+                       value="{% if payroll %}{{ payroll.deductions }}{% endif %}"
+                       placeholder="0.00"
+                       class="w-full p-3 pl-8 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 outline-none transition-all"
+                       required>
+            </div>
+        </div>
 
-        <!-- Net Pay (Auto-calculated) -->
-        <label class="block mb-6">
-            <span class="font-semibold">Net Pay</span>
+        <div class="mb-8 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+            <label class="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">Net Take-Home Pay</label>
             <input type="number" id="netpay" name="net_pay"
                    value="{% if payroll %}{{ payroll.net_pay }}{% endif %}"
-                   placeholder="Calculated automatically"
-                   class="w-full p-3 mt-1 rounded-lg border dark:bg-blue-700 dark:border-blue-600"
+                   class="w-full bg-transparent text-2xl font-black text-slate-900 dark:text-white outline-none"
                    readonly>
-        </label>
+        </div>
 
-        <!-- Buttons -->
-        <div class="flex items-center space-x-4">
-            <button type="submit"
-                    class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
-                Save
-            </button>
-
+        <div class="flex items-center justify-between">
             <a href="{% url 'admin_payroll' %}"
-               class="text-blue-500 hover:underline font-medium">
-                Cancel
+               class="text-slate-500 hover:text-slate-800 dark:hover:text-white font-bold transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i> Back to List
             </a>
+
+            <button type="submit"
+                    class="bg-slate-900 dark:bg-white text-white dark:text-slate-950 px-8 py-3 rounded-xl font-bold hover:bg-slate-800 dark:hover:bg-gray-100 transition shadow-lg shadow-slate-200 dark:shadow-none">
+                <i class="fas fa-save mr-2"></i> Save Record
+            </button>
         </div>
 
     </form>
 </div>
 
-<!-- AUTO-CALCULATE NET PAY JS -->
 <script>
 document.addEventListener("input", function () {
     const gross = parseFloat(document.getElementById("gross").value) || 0;
     const deductions = parseFloat(document.getElementById("deductions").value) || 0;
-    document.getElementById("netpay").value = gross - deductions;
+    document.getElementById("netpay").value = (gross - deductions).toFixed(2);
 });
 </script>
 
