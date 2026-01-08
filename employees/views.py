@@ -491,7 +491,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import EmployeeProfile
-@login_required
+
 def profile_view(request):
     # Get the employee profile from session using your helper
     employee = get_logged_in_employee(request)
@@ -560,7 +560,6 @@ from django.utils import timezone
 from datetime import timedelta, datetime
 from django.contrib.auth.decorators import login_required
 
-@login_required
 def base_notifications(request):
     """
     Prepare notifications for the topbar dropdown.
