@@ -257,3 +257,23 @@ def initials(self):
                 (today.month, today.day) < (self.joining_date.month, self.joining_date.day)
             )
         return 0
+
+
+# employees/models.py
+from django.db import models
+from django.utils import timezone
+from accounts.models import EmployeeProfile
+
+class Notification(models.Model):
+    employee = models.ForeignKey(EmployeeProfile, on_delete=models.CASCADE, related_name="notifications")
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    link = models.URLField(blank=True, null=True)
+    timestamp = models.DateTimeField(default=timezone.now)
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"{self.title} for {self.employee.full_name}"

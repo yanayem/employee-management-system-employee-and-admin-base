@@ -9,16 +9,24 @@ urlpatterns = [
         redirect_authenticated_user=True,
         next_page='/adminportal/dashboard/'  # fix the redirect URL
     ), name='admin_login'),
+    
     # Dashboard
     path('dashboard/', views.dashboard_view, name='admin_dashboard'),
+    
+    #========================
     # payroll management
+    #========================
     path("payroll/", views.payroll_list, name="admin_payroll"),
     path("payroll/add/", views.payroll_add, name="admin_payroll_add"),
     path("payroll/edit/<int:pk>/", views.payroll_edit, name="admin_payroll_edit"),
     path("payroll/delete/<int:pk>/", views.payroll_delete,
          name="admin_payroll_delete"),
     path("payroll/slip/<int:pk>/", views.payroll_slip, name="admin_payroll_slip"),
-
+    
+     # ===============================
+     # Employee Management
+     # ===============================
+     
     path('employees/', views.admin_employee_list, name='admin_employee_list'),
     path('employees/add/', views.admin_employee_add, name='admin_employee_add'),
     path('employees/message/<int:pk>/', views.admin_employee_message,
@@ -35,14 +43,28 @@ urlpatterns = [
     path('employees/activate/<int:pk>/', views.admin_employee_activate,
          name='admin_employee_activate'),  # you need this view
 
-    path('departments/', views.admin_department_list,
-         name='admin_department_list'),
+     # ===============================  
+     # Department Management
+     # ===============================
+    
+    path('departments/', views.admin_department_list, name='admin_department_list'),
+    path('departments/<int:pk>/', views.admin_department_detail, name='admin_department_detail'),
+    path('departments/<int:pk>/delete/', views.admin_department_delete, name='admin_department_delete'),
+
+
+     # ===============================
+     # Attendance Management
+     # ===============================
+     
     path('attendance/', views.admin_attendance_view,
          name='admin_attendance_list'),
     path("leaves/", views.admin_leave_list, name="admin_leave_list"),
     path("leaves/<int:pk>/<str:action>/",
          views.admin_leave_update, name="admin_leave_update"),
-
+     # ===============================
+     # Performance Management
+     # ===============================
+     
     path("performance/", views.admin_performance_list,
          name="admin_performance_list"),
     path("performance/<int:pk>/", views.admin_performance_detail,

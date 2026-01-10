@@ -188,7 +188,18 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
           <div><label class="${labelStyle}">Full Name</label><input type="text" name="full_name" value="{{ profile.full_name }}" class="${inputStyle}" placeholder="e.g. John Doe"></div>
           <div><label class="${labelStyle}">Phone</label><input type="text" name="phone" value="{{ profile.phone }}" class="${inputStyle}" placeholder="e.g. +880123456789"></div>
-          <div><label class="${labelStyle}">Department</label><input type="text" name="department" value="{{ profile.department }}" class="${inputStyle}" placeholder="e.g. Engineering"></div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1 px-1 uppercase tracking-widest">Department</label>
+            <select name="department"
+              class="w-full rounded-xl border border-slate-200 px-4 py-2.5 dark:bg-slate-800 dark:border-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 mb-4">
+              <option value="">Select Department</option>
+              {% for dept in departments %}
+                <option value="{{ dept.id }}" {% if profile.department and profile.department.id == dept.id %}selected{% endif %}>
+                  {{ dept.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
           <div><label class="${labelStyle}">Designation</label><input type="text" name="designation" value="{{ profile.designation }}" class="${inputStyle}" placeholder="e.g. Software Engineer"></div>
           <div><label class="${labelStyle}">Role</label><input type="text" name="role" value="{{ profile.role }}" class="${inputStyle}" placeholder="e.g. Admin/Staff"></div>
           <div><label class="${labelStyle}">Gender</label>

@@ -447,15 +447,23 @@ def admin_employee_view(request, pk):
         'employee': employee
     })
 
+from adminpanel.models import Department
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from employees.models import EmployeeProfile
+
 @login_required
 def admin_employee_edit(request, pk):
     employee = get_object_or_404(EmployeeProfile, pk=pk)
+    departments = Department.objects.all()  # ✅ fetch all departments
 
     if request.method == 'POST':
         employee.full_name = request.POST.get("full_name")
         employee.phone = request.POST.get("phone")
         employee.email = request.POST.get("email")
-        employee.department = request.POST.get("department")
+        department_id = request.POST.get("department")  # this will be the department's ID
+        employee.department = Department.objects.get(pk=department_id) if department_id else None
         employee.role = request.POST.get("role")
         employee.save()
 
@@ -463,9 +471,9 @@ def admin_employee_edit(request, pk):
         return redirect('admin_employee_list')
 
     return render(request, "admin_employee_edit.html", {
-        'employee': employee
+        'employee': employee,
+        'departments': departments,  # pass to template
     })
-    
 
 @login_required
 def admin_employee_activate(request, pk):
@@ -486,19 +494,78 @@ def admin_employee_deactivate(request, pk):
     messages.success(request, f"Employee {employee.full_name} has been deactivated.")
     return redirect('admin_employee_list')
 
-#======================
-# DEPARTMENT LIST VIEW
-#======================
+#=============================
+# Department Management Views
+#=============================
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import Department
+from .forms import DepartmentForm
+from employees.models import Project, Payroll
+from django.db.models import Sum
 
 @login_required(login_url='/admin/')
 def admin_department_list(request):
     """
-    Render a static frontend-only department page for the admin portal.
+    List all departments, add new department via form/modal.
     """
-    return render(request, "admin_department_list.html")
+    departments = Department.objects.all().order_by('name')
+    form = DepartmentForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Department added successfully!")
+        return redirect('admin_department_list')
+
+    return render(request, 'admin_department_list.html', {
+        'departments': departments,
+        'form': form
+    })
+
+
+@login_required(login_url='/admin/')
+def admin_department_detail(request, pk):
+    """
+    Show department full info: employees, projects, total payroll
+    """
+    department = get_object_or_404(Department, pk=pk)
+
+    # ✅ Use the correct related_name for employees
+    employees = department.employees.all()  # instead of employeeprofile_set
+
+    # Count all projects for employees
+    projects = Project.objects.filter(assigned_to__in=employees).count()
+
+    # Sum payroll for all employees in this department
+    total_payroll = Payroll.objects.filter(employee__in=employees).aggregate(total=Sum('gross_salary'))['total'] or 0
+
+    # Edit form
+    form = DepartmentForm(request.POST or None, instance=department)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Department updated successfully!")
+        return redirect('admin_department_detail', pk=pk)
+
+    return render(request, 'admin_department_detail.html', {
+        'department': department,
+        'employees': employees,
+        'project_count': projects,
+        'total_payroll': total_payroll,
+        'form': form,
+    })
+
+
+@login_required(login_url='/admin/')
+def admin_department_delete(request, pk):
+    department = get_object_or_404(Department, pk=pk)
+    department.delete()
+    messages.success(request, "Department deleted successfully!")
+    return redirect('admin_department_list')
+
+#======================
+# ADMIN ATTENDANCE VIEW
+#======================
 
 
 from django.shortcuts import render, get_object_or_404

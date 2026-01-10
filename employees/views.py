@@ -303,13 +303,18 @@ def leave_view(request):
 
     leave_requests = LeaveRequest.objects.filter(employee=employee).order_by("-created_at")
 
+        # Calculate leave balances
     balances = {
         "Annual": 18 - sum(l.total_days() for l in leave_requests.filter(leave_type="Annual", status="Approved")),
         "Sick": 8 - sum(l.total_days() for l in leave_requests.filter(leave_type="Sick", status="Approved")),
         "Personal": 5 - sum(l.total_days() for l in leave_requests.filter(leave_type="Personal", status="Approved")),
-        "Maternity": 90 - sum(l.total_days() for l in leave_requests.filter(leave_type="Maternity", status="Approved")),
         "Emergency": 5 - sum(l.total_days() for l in leave_requests.filter(leave_type="Emergency", status="Approved")),
     }
+
+    # Only show Maternity Leave for female employees
+    if employee.gender.lower() == "female":
+        balances["Maternity"] = 90 - sum(l.total_days() for l in leave_requests.filter(leave_type="Maternity", status="Approved"))
+
 
     context = {
         "form": form,
@@ -481,39 +486,38 @@ def project_detail_view(request, pk):
 
     return render(request, "project_detail.html", context)
 
-# ===============================
-# Other Pages
-# ===============================
-from django.shortcuts import render, redirect
+
+#=============================
+# Profile View and Edit
+#=============================
+
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .models import EmployeeData
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from .models import EmployeeProfile
+from employees.models import EmployeeProfile
+from adminpanel.models import Department
 
 def profile_view(request):
-    # Get the employee profile from session using your helper
     employee = get_logged_in_employee(request)
     if not employee:
         return redirect("accounts:employee_login_page")
 
     profile = employee
+    departments = Department.objects.all()  # For dropdown
 
     if request.method == "POST":
-        # --- 1. Security / Password Change ---
+        # --- 1. Password Change ---
         if "new_password" in request.POST:
             new_password = request.POST.get("new_password")
             confirm_password = request.POST.get("confirm_password")
             if new_password and new_password == confirm_password:
-                profile.password = new_password  # Note: Use make_password() in production
+                profile.password = new_password  # ⚠️ Use hashing in production
                 profile.save()
                 messages.success(request, "Password changed successfully!")
             else:
                 messages.error(request, "Passwords do not match!")
             return redirect("employees:profile")
 
-        # --- 2. Emergency Info Update ---
+        # --- 2. Emergency Info ---
         elif "emergency_name" in request.POST:
             profile.emergency_name = request.POST.get("emergency_name")
             profile.emergency_relation = request.POST.get("emergency_relation")
@@ -523,61 +527,82 @@ def profile_view(request):
             messages.success(request, "Emergency info updated!")
             return redirect("employees:profile")
 
-        # --- 3. General Profile & Avatar Update ---
+        # --- 3. General Profile & Avatar ---
         else:
-            # Update text fields
             profile.full_name = request.POST.get("full_name", profile.full_name)
             profile.phone = request.POST.get("phone", profile.phone)
-            profile.department = request.POST.get("department", profile.department)
             profile.designation = request.POST.get("designation", profile.designation)
             profile.role = request.POST.get("role", profile.role)
             profile.gender = request.POST.get("gender", profile.gender)
-            
+            profile.address = request.POST.get("address", profile.address)
+
+            # Department assignment via dropdown
+            dept_id = request.POST.get("department")
+            if dept_id:
+                try:
+                    profile.department = Department.objects.get(pk=dept_id)
+                except Department.DoesNotExist:
+                    profile.department = None
+            else:
+                profile.department = None
+
             joining_date = request.POST.get("joining_date")
             if joining_date:
                 profile.joining_date = joining_date
-            profile.address = request.POST.get("address", profile.address)
 
-            # --- Avatar Logic: The "Auto Save" Part ---
-            # If a new file is uploaded via the camera button
+            # Avatar upload/delete
             if request.FILES.get("avatar"):
                 profile.avatar = request.FILES["avatar"]
-            
-            # If the delete button was clicked (it sends 'on' or '1' via the checkbox)
             elif request.POST.get("remove_avatar") in ["1", "on"]:
                 if profile.avatar:
-                    profile.avatar.delete(save=False) # Physically delete the old file
+                    profile.avatar.delete(save=False)
                 profile.avatar = None
 
             profile.save()
             messages.success(request, "Profile updated successfully!")
             return redirect("employees:profile")
 
-    return render(request, "profile.html", {"profile": profile})
+    return render(request, "profile.html", {
+        "profile": profile,
+        "departments": departments,
+    })
 
-from django.shortcuts import render
+# ========================
+# Notifications Context Processor
+# ========================
+
+from .models import Notification, EmployeeProfile
 from django.utils import timezone
-from datetime import timedelta, datetime
-from django.contrib.auth.decorators import login_required
 
 def base_notifications(request):
     """
-    Prepare notifications for the topbar dropdown.
-    No separate page is needed.
+    Context processor to provide real notifications for the topbar dropdown.
+    Shows the latest 20 notifications for the logged-in employee.
     """
-    # Example: dynamic notifications (replace with your DB queries)
-    notifications = [
-        {"title": "New Task Assigned", "message": "You have a new task.", "link": "#", "timestamp": timezone.now() - timedelta(minutes=5), "is_read": False},
-        {"title": "Leave Approved", "message": "Your leave request approved.", "link": "#", "timestamp": timezone.now() - timedelta(hours=2), "is_read": True},
-        {"title": "Payroll Credited", "message": "Salary credited for January.", "link": "#", "timestamp": timezone.now() - timedelta(days=1), "is_read": False},
-        # Add more dynamic notifications here...
-    ]
+    employee_id = request.session.get("employee_id")
+    notifications = []
+    unread_count = 0
 
-    # Keep only latest 20
-    notifications = sorted(notifications, key=lambda n: n["timestamp"], reverse=True)[:20]
-
-    # Unread count
-    unread_count = sum(1 for n in notifications if not n["is_read"])
+    if employee_id:
+        try:
+            employee = EmployeeProfile.objects.get(employee_id=employee_id)
+            
+            # Fetch latest 20 notifications for this employee
+            notifications_qs = Notification.objects.filter(employee=employee).order_by("-timestamp")[:20]
+            
+            # Convert to list so we can loop safely in template
+            notifications = list(notifications_qs)
+            
+            # Count unread
+            unread_count = Notification.objects.filter(employee=employee, is_read=False).count()
+            
+            # Format timestamp for template
+            for n in notifications:
+                n.time_display = timezone.localtime(n.timestamp).strftime("%b %d, %H:%M")
+                
+        except EmployeeProfile.DoesNotExist:
+            notifications = []
+            unread_count = 0
 
     return {
         "notifications": notifications,

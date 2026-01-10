@@ -9,8 +9,8 @@ conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 
 # Drop the employees_leaverequest table if it exists
-cursor.execute("DROP TABLE IF EXISTS Project;")
+cursor.execute("DROP TABLE IF EXISTS Department;")
 conn.commit()
 conn.close()
 
-print("Table 'Project' removed successfully!")
+print("Table 'Department' removed successfully!")

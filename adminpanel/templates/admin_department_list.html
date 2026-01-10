@@ -1,89 +1,102 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en" class="light">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Departments</title>
-    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      // Enable Tailwind class-based dark mode
-      tailwind.config = { darkMode: "class" };
-    </script>
+  <meta charset="UTF-8">
+  <title>Departments</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <style>
+    .glass {
+      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+    .transition-hover { transition: all 0.2s ease-in-out; }
+  </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
+<body class="mt-16 md:ml-64 bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300 min-h-screen flex">
 
-{% include 'adminsidetopbar.html' %}
+  <!-- Sidebar -->
+  {% include 'adminsidetopbar.html' %}
 
-<div class="ml-64 mt-16 p-6">
-    <h2 class="text-3xl font-bold mb-6">Departments</h2>
+  <!-- Main content -->
+  <div class="flex-1 flex flex-col min-h-screen p-6">
 
-    <!-- Theme Toggle -->
-    <div class="fixed top-20 right-6 z-50">
-      <button id="theme-toggle" class="bg-gray-200 dark:bg-gray-700 p-2 rounded-full shadow">
-        <i id="theme-icon" class="fas fa-moon text-gray-800 dark:text-white"></i>
+    <h1 class="text-3xl font-bold mb-6 text-gray-900 dark:text-gray-100">Departments</h1>
+
+    <!-- Add Department Button -->
+    <div class="mb-6 flex justify-end">
+      <button id="add-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow transition flex items-center">
+        <i class="fa fa-plus mr-2"></i> Add Department
       </button>
     </div>
 
-    <!-- Add Department -->
-    <form id="add-department-form" class="flex mb-6 space-x-4">
-        <input type="text" id="department-name" placeholder="New Department"
-               class="w-1/3 p-3 rounded-lg border dark:bg-gray-700 dark:border-blue-600 text-gray-800 dark:text-gray-100">
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Add</button>
-    </form>
-
-    <!-- Department List -->
-    <div id="department-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        <!-- Example departments -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 flex justify-between items-center">
-            <span>HR</span>
-            <button class="text-red-500 hover:underline remove-btn">Delete</button>
+    <!-- Departments Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      {% for dept in departments %}
+        <div class="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md flex flex-col justify-between min-h-[160px] transition-hover hover:shadow-lg">
+          <div>
+            <h2 class="text-2xl font-bold text-green-600 dark:text-gray-100 mb-2">{{ dept.name }}</h2>
+            <p class="text-gray-700 dark:text-gray-300 text-base leading-relaxed">{{ dept.description|default:"No Description" }}</p>
+          </div>
+          <div class="mt-4 flex justify-end space-x-2">
+            <a href="{% url 'admin_department_detail' dept.pk %}" class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded transition">
+              <i class="fa fa-eye"></i>
+            </a>
+            <a href="{% url 'admin_department_delete' dept.pk %}" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded transition"
+               onclick="return confirm('Delete {{ dept.name }}?')">
+              <i class="fa fa-trash"></i>
+            </a>
+          </div>
         </div>
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 flex justify-between items-center">
-            <span>IT</span>
-            <button class="text-red-500 hover:underline remove-btn">Delete</button>
-        </div>
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 flex justify-between items-center">
-            <span>Finance</span>
-            <button class="text-red-500 hover:underline remove-btn">Delete</button>
-        </div>
+      {% empty %}
+        <p class="text-gray-500 col-span-3">No departments yet.</p>
+      {% endfor %}
     </div>
-</div>
+  </div>
 
-<script>
-const themeBtn = document.getElementById('theme-toggle');
-const themeIcon = document.getElementById('theme-icon');
-const addForm = document.getElementById('add-department-form');
-const deptList = document.getElementById('department-list');
+  <!-- Add Department Modal -->
+  <div id="add-modal" class="fixed inset-0 hidden z-50 flex items-center justify-center">
+    <div id="modalBackdrop" class="absolute inset-0 bg-black bg-opacity-40 backdrop-blur-sm"></div>
 
-// Theme toggle
-themeBtn.addEventListener('click', () => {
-    document.documentElement.classList.toggle('dark');
-    themeIcon.classList.toggle('fa-moon');
-    themeIcon.classList.toggle('fa-sun');
-});
+    <div class="glass relative z-10 w-full max-w-md p-6 mx-4">
+      <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Add Department</h2>
+      <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="flex justify-end gap-2 mt-4">
+          <button type="button" id="close-modal" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded transition">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-// Add department dynamically
-addForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const input = document.getElementById('department-name');
-    const name = input.value.trim();
-    if(name) {
-        const div = document.createElement('div');
-        div.className = "bg-white dark:bg-blue-800 rounded-xl shadow p-6 flex justify-between items-center";
-        div.innerHTML = `<span>${name}</span> <button class="text-red-500 hover:underline remove-btn">Delete</button>`;
-        deptList.appendChild(div);
-        input.value = "";
+  <script>
+    // Modal toggle
+    const modal = document.getElementById('add-modal');
+    const btn = document.getElementById('add-btn');
+    const close = document.getElementById('close-modal');
+    const backdrop = document.getElementById('modalBackdrop');
+
+    btn.onclick = () => modal.classList.remove('hidden');
+    close.onclick = () => modal.classList.add('hidden');
+    backdrop.onclick = () => modal.classList.add('hidden');
+
+    // Light/Dark toggle with persistence
+    const themeToggle = document.getElementById('themeToggle');
+    if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+    if(themeToggle){
+      themeToggle.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark');
+        localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+      });
     }
-});
-
-// Delete department dynamically
-deptList.addEventListener('click', (e) => {
-    if(e.target.classList.contains('remove-btn')) {
-        e.target.parentElement.remove();
-    }
-});
-</script>
-
+  </script>
 </body>
 </html>

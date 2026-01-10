@@ -46,7 +46,7 @@
     <!-- Right: Notifications, Theme, Profile -->
     <div class="flex items-center gap-4">
 
-      <!-- Notification Dropdown -->
+     <!-- Notification Dropdown -->
       <div class="relative">
         <button id="notification-btn" class="relative focus:outline-none">
           <i class="fas fa-bell text-xl"></i>
@@ -56,19 +56,23 @@
             </span>
           {% endif %}
         </button>
-
         <div id="notification-panel" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
           <div class="p-4 border-b font-bold text-gray-800 dark:text-gray-100">
             Notifications
           </div>
           <div class="max-h-60 overflow-y-auto">
             {% if notifications %}
-              {% for note in notifications %}
-                <a href="{{ note.link }}" class="block px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                  <p class="text-sm font-medium text-gray-800 dark:text-gray-100">{{ note.title }}</p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">{{ note.message }}</p>
-                  <span class="text-xs text-gray-400 dark:text-gray-500">{{ note.timestamp|timesince }} ago</span>
-                </a>
+              {% for n in notifications %}
+                <div class="flex items-start gap-2 p-2 {% if not n.is_read %}bg-blue-50 dark:bg-blue-900{% endif %}">
+                  <div class="flex-1">
+                    <p class="font-semibold">{{ n.title }}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">{{ n.message }}</p>
+                    <p class="text-xs text-gray-400">{{ n.timestamp|date:"M d, H:i" }}</p>
+                  </div>
+                  {% if n.link %}
+                    <a href="{{ n.link }}" class="text-blue-500 hover:underline">View</a>
+                  {% endif %}
+                </div>
               {% endfor %}
             {% else %}
               <p class="text-center text-gray-500 dark:text-gray-400 py-4">No notifications</p>
@@ -76,6 +80,7 @@
           </div>
         </div>
       </div>
+
 
       <!-- Theme Toggle -->
       <button id="theme-toggle">

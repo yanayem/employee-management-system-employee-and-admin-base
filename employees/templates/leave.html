@@ -52,8 +52,11 @@
                 <option value="Annual">Annual</option>
                 <option value="Sick">Sick</option>
                 <option value="Personal">Personal</option>
-                <option value="Maternity">Maternity</option>
                 <option value="Emergency">Emergency</option>
+                {% if global_profile and global_profile.gender|lower == "female" %}
+  <option value="Maternity">Maternity</option>
+{% endif %}
+
               </select>
             </div>
             <div>
@@ -80,20 +83,30 @@
       </div>
     </div>
 
-    <!-- Leave Balances -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-      {% comment %} Example leave cards {% endcomment %}
+      <!-- Leave Balances -->
+  <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+    {% for leave_type, remaining_days in balances.items %}
       <div class="bg-gray-200 dark:bg-gray-800 rounded-xl p-6 border border-gray-400 dark:border-gray-700 text-center transition-colors">
         <div class="w-16 h-16 bg-blue-100 dark:bg-gray-900 rounded-full flex items-center justify-center mx-auto mb-3">
-          <i class="fas fa-calendar-day text-blue-600 dark:text-blue-400 text-2xl"></i>
+          {% if leave_type == 'Annual' %}
+            <i class="fas fa-calendar-day text-blue-600 dark:text-blue-400 text-2xl"></i>
+          {% elif leave_type == 'Sick' %}
+            <i class="fas fa-head-side-cough text-green-600 dark:text-green-400 text-2xl"></i>
+          {% elif leave_type == 'Personal' %}
+            <i class="fas fa-user-clock text-yellow-600 dark:text-yellow-400 text-2xl"></i>
+          {% elif leave_type == 'Maternity' %}
+            <i class="fas fa-baby text-pink-600 dark:text-pink-400 text-2xl"></i>
+          {% elif leave_type == 'Emergency' %}
+            <i class="fas fa-ambulance text-red-600 dark:text-red-400 text-2xl"></i>
+          {% endif %}
         </div>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Annual Leave</h3>
-        <p class="text-3xl font-bold text-blue-600 dark:text-blue-400">18</p>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">{{ leave_type }} Leave</h3>
+        <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ remaining_days }}</p>
         <p class="text-sm text-gray-600 dark:text-gray-300">days remaining</p>
       </div>
+    {% endfor %}
+  </div>
 
-      <!-- Add similar cards for Sick, Personal, Maternity leaves... -->
-    </div>
 
     <!-- Leave Requests -->
     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 mt-6 transition-colors">

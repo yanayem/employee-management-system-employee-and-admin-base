@@ -85,6 +85,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                  'accounts.context_processors.global_employee',
                  "employees.context_processors.notifications_processor",
+                 'employees.views.base_notifications',
             ],
         },
     },
@@ -144,6 +145,15 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+#==============================
+#Employee Authentication Settings
+#==============================
+# Redirect for login_required
+LOGIN_URL = '/accounts/login-page/'
+
+LOGIN_REDIRECT_URL = '/employees/profile/'  # or any page you want
+
 
 
 #==============================
