@@ -19,7 +19,7 @@
         }
       };
       
-      if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
           document.documentElement.classList.add('dark');
       } else {
           document.documentElement.classList.remove('dark');
@@ -30,7 +30,7 @@
 </head>
 <body class="bg-gray-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300">
 
-<header class="fixed top-0 left-0 right-0 h-16 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between px-6 z-50">
+<header class="fixed top-0 left-0 right-0 h-16 bg-white dark:bg-slate-950 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between px-6 z-50">
   <div class="flex items-center space-x-4">
     <button id="sidebar-toggle" class="md:hidden text-slate-800 dark:text-slate-100 p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg">
       <i class="fas fa-bars-staggered text-xl"></i>
@@ -63,7 +63,7 @@
         <i class="fas fa-angle-down text-[10px] text-slate-400 mr-1 hidden md:block"></i>
       </button>
       
-      <div id="profile-dropdown" class="hidden absolute right-0 mt-3 w-56 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 py-2 z-50 overflow-hidden">
+      <div id="profile-dropdown" class="hidden absolute right-0 mt-3 w-56 bg-white dark:bg-slate-950 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-800 py-2 z-50 overflow-hidden">
         <div class="px-4 py-3 bg-gray-50 dark:bg-slate-800/50 mb-2">
             <p class="text-xs text-slate-400 font-bold uppercase tracking-tighter">Connected as</p>
             <p class="text-sm font-bold truncate text-slate-900 dark:text-white">{{ user.email|default:"admin@managely.com" }}</p>
@@ -79,7 +79,7 @@
   </div>
 </header>
 
-<aside id="sidebar" class="fixed top-16 left-0 w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 h-[calc(100vh-4rem)] z-30 transform -translate-x-full md:translate-x-0 transition-transform duration-300 overflow-y-auto">
+<aside id="sidebar" class="fixed top-16 left-0 w-64 bg-white dark:bg-slate-950 border-r border-gray-200 dark:border-slate-800 h-[calc(100vh-4rem)] z-30 transform -translate-x-full md:translate-x-0 transition-transform duration-300 overflow-y-auto">
   <nav class="p-4">
     <ul class="space-y-1" id="nav-list">
       <li>
@@ -104,7 +104,7 @@
       </li>
       <li>
         <a href="{% url 'admin_leave_list' %}" class="nav-link flex items-center px-4 py-3 rounded-xl transition-all group">
-          <i class="fas fa-calendar-day w-6 text-center text-lg"></i><span class="ml-3 font-semibold">Leave Mgmt</span>
+          <i class="fas fa-calendar-day w-6 text-center text-lg"></i><span class="ml-3 font-semibold">Leave Management</span>
         </a>
       </li>
       <li>
@@ -177,7 +177,7 @@
   updateIcon();
   themeBtn.addEventListener('click', () => {
     document.documentElement.classList.toggle('dark');
-    localStorage.setItem('color-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
     updateIcon();
   });
 </script>
